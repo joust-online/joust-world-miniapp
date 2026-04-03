@@ -1,4 +1,4 @@
-import { MiniKit, tokenToDecimals, Tokens, VerificationLevel } from "@worldcoin/minikit-js";
+import { MiniKit } from "@worldcoin/minikit-js";
 import { JOUST_ARENA_ADDRESS, USDC_ADDRESS, ETH_ADDRESS } from "./contracts";
 import { joustArenaAbi } from "./abi";
 
@@ -15,7 +15,7 @@ export async function sendTransaction(
     throw new Error("MiniKit not available. Open this app in World App.");
   }
 
-  const txPayload = {
+  const result = await MiniKit.sendTransaction({
     transaction: [
       {
         address: JOUST_ARENA_ADDRESS,
@@ -25,13 +25,12 @@ export async function sendTransaction(
         ...(value ? { value: value.toString() } : {}),
       },
     ],
-  };
+  });
 
-  const result = await MiniKit.commandsAsync.sendTransaction(txPayload);
-  if (result.finalPayload.status === "error") {
-    throw new Error(result.finalPayload.error_code ?? "Transaction failed");
+  if (result.executedWith === "fallback") {
+    throw new Error("Transaction not available outside World App");
   }
-  return result.finalPayload;
+  return result.data;
 }
 
 export async function sendERC20Transaction(
@@ -44,8 +43,7 @@ export async function sendERC20Transaction(
     throw new Error("MiniKit not available. Open this app in World App.");
   }
 
-  // For ERC20 jousts, we need to approve + call in one batch via Permit2
-  const txPayload = {
+  const result = await MiniKit.sendTransaction({
     transaction: [
       {
         address: JOUST_ARENA_ADDRESS,
@@ -65,35 +63,17 @@ export async function sendERC20Transaction(
         deadline: Math.floor(Date.now() / 1000 + 30 * 60).toString(),
       },
     ],
-  };
-
-  const result = await MiniKit.commandsAsync.sendTransaction(txPayload);
-  if (result.finalPayload.status === "error") {
-    throw new Error(result.finalPayload.error_code ?? "Transaction failed");
-  }
-  return result.finalPayload;
-}
-
-export async function requestVerification(action: string, signal?: string) {
-  if (!MiniKit.isInstalled()) {
-    throw new Error("MiniKit not available. Open this app in World App.");
-  }
-
-  const result = await MiniKit.commandsAsync.verify({
-    action,
-    signal,
-    verification_level: action === "verify-identity" ? VerificationLevel.Device : VerificationLevel.Orb,
   });
 
-  if (result.finalPayload.status === "error") {
-    throw new Error("Verification failed");
+  if (result.executedWith === "fallback") {
+    throw new Error("Transaction not available outside World App");
   }
-  return result.finalPayload;
+  return result.data;
 }
 
 export async function sharePool(poolId: string, poolTitle: string, won?: boolean, closeAfter?: boolean) {
   const appId = process.env.NEXT_PUBLIC_APP_ID;
-  await MiniKit.commandsAsync.share({
+  await MiniKit.share({
     title: `Joust: ${poolTitle}`,
     text: won !== undefined
       ? `${won ? "I won!" : "I participated in"} "${poolTitle}" on Joust!`
@@ -106,11 +86,11 @@ export async function sharePool(poolId: string, poolTitle: string, won?: boolean
 }
 
 export async function shareContacts(poolTitle: string) {
-  const result = await MiniKit.commandsAsync.shareContacts({
+  const result = await MiniKit.shareContacts({
     isMultiSelectEnabled: true,
     inviteMessage: `Join "${poolTitle}" on Joust!`,
   });
-  return result.finalPayload;
+  return result.data;
 }
 
 // ── On-chain action helpers ──
@@ -180,15 +160,13 @@ export async function closePoolOnChain(poolId: bigint) {
 
 export function closeMiniApp() {
   if (!MiniKit.isInstalled()) return;
-  (MiniKit.commandsAsync as any).closeMiniApp();
+  MiniKit.closeMiniApp();
 }
 
 export function sendHaptic(type: "success" | "error" | "heavy") {
   if (!MiniKit.isInstalled()) return;
-  const haptics = {
-    success: { hapticsType: "notification" as const, style: "success" as const },
-    error: { hapticsType: "notification" as const, style: "error" as const },
-    heavy: { hapticsType: "impact" as const, style: "heavy" as const },
-  };
-  MiniKit.commandsAsync.sendHapticFeedback(haptics[type]);
+  MiniKit.sendHapticFeedback({
+    hapticsType: type === "heavy" ? "impact" : "notification",
+    style: type,
+  } as any);
 }
