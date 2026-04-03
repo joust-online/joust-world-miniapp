@@ -27,21 +27,25 @@ export function VerificationWall({ children }: { children: React.ReactNode }) {
   // Authenticated but not verified — show verify step
   if (session?.authenticated && !session.user.worldIdVerified) {
     const handleVerify = async () => {
+      if (!MiniKit.isInstalled()) {
+        setError("Please open this app inside World App.");
+        return;
+      }
       setLoading(true);
       setError(null);
       try {
-        const result = await MiniKit.commandsAsync.verify({
+        const result = await MiniKit.verify({
           action: "verify-identity",
           verification_level: "device",
         });
-        if (result.finalPayload.status === "error") {
-          throw new Error("Verification cancelled");
+        if (result.executedWith === "fallback") {
+          throw new Error("Verification not available");
         }
         const res = await fetch("/api/verify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            proof: result.finalPayload,
+            proof: result.data,
             action: "verify-identity",
           }),
         });
@@ -105,20 +109,20 @@ export function VerificationWall({ children }: { children: React.ReactNode }) {
       const nonceRes = await fetch("/api/auth/nonce");
       const { nonce } = await nonceRes.json();
 
-      const result = await MiniKit.commandsAsync.walletAuth({
+      const result = await MiniKit.walletAuth({
         nonce,
         statement: "Sign in to Joust — prediction markets powered by World ID",
         expirationTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       });
 
-      if (result.finalPayload.status === "error") {
-        throw new Error(result.finalPayload.error_code ?? "Sign-in cancelled");
+      if (result.executedWith === "fallback") {
+        throw new Error("Sign-in not available outside World App");
       }
 
       const res = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ payload: result.finalPayload, nonce }),
+        body: JSON.stringify({ payload: result.data, nonce }),
       });
       if (res.ok) {
         queryClient.invalidateQueries({ queryKey: ["session"] });
