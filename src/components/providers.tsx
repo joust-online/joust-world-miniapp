@@ -17,7 +17,7 @@ const wagmiConfig = createConfig({
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <MiniKitProvider>
+    <MiniKitProvider appId={process.env.NEXT_PUBLIC_APP_ID!}>
       <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
           {children}
