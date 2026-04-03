@@ -8,7 +8,6 @@ import { useQueryClient } from "@tanstack/react-query";
 export function VerificationWall({ children }: { children: React.ReactNode }) {
   const { data: session, isLoading } = useSession();
   const queryClient = useQueryClient();
-  const [step, setStep] = useState<"signin" | "verify">("signin");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,25 +30,26 @@ export function VerificationWall({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
       try {
-        const result = await MiniKit.commandsAsync.verify({
+        const result = await MiniKit.verify({
           action: "verify-identity",
-          verification_level: "device" as any, // accepts device or orb
+          verification_level: "device",
         });
-        if (result.finalPayload.status === "error") {
-          throw new Error("Verification cancelled");
+        if (result.executedWith === "fallback") {
+          throw new Error("Verification not available outside World App");
         }
         const res = await fetch("/api/verify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            proof: result.finalPayload,
+            proof: result.data,
             action: "verify-identity",
           }),
         });
         if (res.ok) {
           queryClient.invalidateQueries({ queryKey: ["session"] });
         } else {
-          throw new Error("Verification failed on server");
+          const err = await res.json();
+          throw new Error(err.error ?? "Verification failed on server");
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Verification failed");
@@ -63,7 +63,7 @@ export function VerificationWall({ children }: { children: React.ReactNode }) {
         <div className="w-20 h-20 rounded-full bg-accent/20 flex items-center justify-center text-4xl mb-6">
           🌐
         </div>
-        <h1 className="text-2xl font-bold mb-2">Verify You're Human</h1>
+        <h1 className="text-2xl font-bold mb-2">Verify You&apos;re Human</h1>
         <p className="text-muted-foreground mb-2 max-w-xs">
           Joust uses World ID to ensure every prediction comes from a real person — not bots or Sybil accounts.
         </p>
@@ -100,23 +100,27 @@ export function VerificationWall({ children }: { children: React.ReactNode }) {
     try {
       const nonceRes = await fetch("/api/auth/nonce");
       const { nonce } = await nonceRes.json();
-      const result = await MiniKit.commandsAsync.walletAuth({
+
+      const result = await MiniKit.walletAuth({
         nonce,
         statement: "Sign in to Joust — prediction markets powered by World ID",
         expirationTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       });
-      if (result.finalPayload.status === "error") {
-        throw new Error("Sign-in cancelled");
+
+      if (result.executedWith === "fallback") {
+        throw new Error("Sign-in not available outside World App");
       }
+
       const res = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ payload: result.finalPayload, nonce }),
+        body: JSON.stringify({ payload: result.data, nonce }),
       });
       if (res.ok) {
         queryClient.invalidateQueries({ queryKey: ["session"] });
       } else {
-        throw new Error("Authentication failed");
+        const err = await res.json();
+        throw new Error(err.error ?? "Authentication failed");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign-in failed");
