@@ -95,6 +95,10 @@ export function VerificationWall({ children }: { children: React.ReactNode }) {
 
   // Not authenticated — show sign-in
   const handleSignIn = async () => {
+    if (!MiniKit.isInstalled()) {
+      setError("Please open this app inside World App to sign in.");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
