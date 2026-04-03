@@ -34,7 +34,7 @@ model User {
 
 model Pool {
   id                 String    @id @default(uuid(7)) @db.Uuid
-  contractId         BigInt    @default(0)
+  contractId         BigInt?
   title              String    @db.VarChar(200)
   description        String?   @db.VarChar(2000)
   image              String?   @db.VarChar(255)
@@ -105,7 +105,7 @@ model Joust {
   userId    Int
   poolId    String  @db.Uuid
   user      User    @relation(fields: [userId], references: [id])
-  pool      Pool    @relation(fields: [poolId], references: [id])
+  pool      Pool    @relation(fields: [poolId], references: [id], onDelete: Cascade)
   joustType Int     @db.SmallInt
   amount    BigInt
   isWinner  Boolean @default(false)
@@ -127,7 +127,7 @@ model Notification {
   title  String           @db.VarChar(255)
   body   String?          @db.VarChar(3000)
   poolId String?          @db.Uuid
-  pool   Pool?            @relation(fields: [poolId], references: [id])
+  pool   Pool?            @relation(fields: [poolId], references: [id], onDelete: Cascade)
   read   Boolean          @default(false)
 
   createdAt DateTime @default(now())
@@ -159,7 +159,7 @@ model HonorVote {
 
   voter   User @relation("Voter", fields: [voterId], references: [id])
   arbiter User @relation("ArbiterHonor", fields: [arbiterId], references: [id])
-  pool    Pool @relation(fields: [poolId], references: [id])
+  pool    Pool @relation(fields: [poolId], references: [id], onDelete: Cascade)
 
   @@unique([voterId, arbiterId, poolId])
   @@index([arbiterId])
@@ -190,7 +190,7 @@ model WorldIdVerification {
   userId            Int
   user              User     @relation(fields: [userId], references: [id])
   action            String   // "verify-identity", "create-pool", "honor-vote"
-  nullifierHash     String   @unique
+  nullifierHash     String   @unique @db.VarChar(68)
   verificationLevel String   // "orb" or "device"
 
   createdAt DateTime @default(now())
