@@ -77,7 +77,7 @@ export default function ProfilePage() {
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-card rounded-xl border border-border p-3 text-center">
               <div className="text-lg font-bold">{user._count?.jousts ?? 0}</div>
-              <div className="text-xs text-muted-foreground">Jousts</div>
+              <div className="text-xs text-muted-foreground">Predictions</div>
             </div>
             <div className="bg-card rounded-xl border border-border p-3 text-center">
               <div className="text-lg font-bold text-green-400">{user.winCount ?? 0}</div>

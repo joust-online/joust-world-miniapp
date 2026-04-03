@@ -36,7 +36,7 @@ export default function LeaderboardPage() {
             tab === "jousters" ? "bg-accent text-white" : "bg-muted text-muted-foreground"
           }`}
         >
-          Top Jousters
+          Top Predictors
         </button>
       </div>
 
@@ -82,13 +82,13 @@ export default function LeaderboardPage() {
                   </span>
                   <VerificationBadge level={item.worldIdLevel} />
                 </div>
-                <span className="text-xs text-muted-foreground">{item._count?.jousts ?? 0} jousts</span>
+                <span className="text-xs text-muted-foreground">{item._count?.jousts ?? 0} predictions</span>
               </div>
               <span className="text-sm font-semibold">{item.totalPoints} pts</span>
             </div>
           ))}
           {(!data?.topJousters || data.topJousters.length === 0) && (
-            <p className="text-sm text-muted-foreground text-center py-6">No jousters yet</p>
+            <p className="text-sm text-muted-foreground text-center py-6">No predictors yet</p>
           )}
         </div>
       )}

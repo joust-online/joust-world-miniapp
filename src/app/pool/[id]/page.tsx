@@ -8,7 +8,7 @@ import { useTransaction } from "@/hooks/use-transaction";
 import { WorldIdGate } from "@/components/world-id-gate";
 import { formatAmount, shortenAddress } from "@/lib/utils";
 import { COLLATERAL_TOKENS, ETH_ADDRESS } from "@/lib/contracts";
-import { sharePool, shareContacts, sendHaptic, sendTransaction, sendERC20Transaction } from "@/lib/minikit";
+import { sharePool, shareContacts, closeMiniApp, sendHaptic, sendTransaction, sendERC20Transaction } from "@/lib/minikit";
 import { HonorVote } from "@/components/honor-vote";
 import { formatDistanceToNow } from "date-fns";
 import { parseUnits } from "viem";
@@ -292,7 +292,7 @@ export default function PoolDetailPage() {
           {pool.state}
         </span>
         <span>{formatAmount(total, collateral.decimals)} {collateral.symbol}</span>
-        <span>{pool._count?.jousts ?? 0} jousts</span>
+        <span>{pool._count?.jousts ?? 0} predictions</span>
         <span>Ends {formatDistanceToNow(new Date(pool.endTime), { addSuffix: true })}</span>
       </div>
 
@@ -331,11 +331,11 @@ export default function PoolDetailPage() {
         <WorldIdGate level="device">
           {showJoust ? (
             <div className="bg-card rounded-xl border border-border p-4 mb-4">
-              <h3 className="font-semibold text-sm mb-3">Place Joust</h3>
+              <h3 className="font-semibold text-sm mb-3">Stake Prediction</h3>
               {selectedOption ? (
                 <>
                   <p className="text-xs text-muted-foreground mb-2">
-                    Jousting on: {pool.options?.find((o: any) => o.joustType === selectedOption)?.label}
+                    Predicting: {pool.options?.find((o: any) => o.joustType === selectedOption)?.label}
                   </p>
                   <div className="flex gap-2 mb-3">
                     <input
@@ -350,7 +350,7 @@ export default function PoolDetailPage() {
                   </div>
                   {contractId == null && (
                     <p className="text-xs text-red-400 mb-2">
-                      Pool not yet deployed on-chain. Cannot place jousts.
+                      Pool not yet deployed on-chain. Cannot stake predictions.
                     </p>
                   )}
                   <button
@@ -362,7 +362,7 @@ export default function PoolDetailPage() {
                       ? "Sending..."
                       : joustTx.status === "confirming"
                       ? "Confirming..."
-                      : "Joust"}
+                      : "Stake Prediction"}
                   </button>
                 </>
               ) : (
@@ -374,13 +374,13 @@ export default function PoolDetailPage() {
               onClick={() => setShowJoust(true)}
               className="w-full py-3 bg-accent text-white rounded-xl font-semibold mb-4"
             >
-              Place Joust
+              Stake Prediction
             </button>
           )}
         </WorldIdGate>
       )}
 
-      {/* Share / Invite Actions */}
+      {/* Share / Invite / Done Actions */}
       <div className="flex gap-2 mb-4">
         <button
           onClick={() => sharePool(pool.id, pool.title)}
@@ -393,6 +393,12 @@ export default function PoolDetailPage() {
           className="flex-1 py-2 bg-muted rounded-xl text-sm text-center"
         >
           Invite Friends
+        </button>
+        <button
+          onClick={() => closeMiniApp()}
+          className="flex-1 py-2 bg-muted rounded-xl text-sm text-center"
+        >
+          Done
         </button>
       </div>
 
@@ -503,10 +509,10 @@ export default function PoolDetailPage() {
         </div>
       </div>
 
-      {/* Recent Jousts */}
+      {/* Recent Predictions */}
       {pool.jousts?.length > 0 && (
         <div className="mb-4">
-          <h3 className="font-semibold text-sm mb-2">Recent Jousts</h3>
+          <h3 className="font-semibold text-sm mb-2">Recent Predictions</h3>
           <div className="space-y-1.5">
             {pool.jousts.slice(0, 10).map((joust: any) => (
               <div key={joust.id} className="flex items-center justify-between text-xs bg-card rounded-lg border border-border p-2.5">

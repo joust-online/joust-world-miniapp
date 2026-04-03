@@ -61,7 +61,7 @@ export function PoolCard({ pool }: PoolCardProps) {
         </div>
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>{formatAmount(total, collateral.decimals)} {collateral.symbol} pooled</span>
-          <span>{pool._count.jousts} jousts</span>
+          <span>{pool._count.jousts} predictions</span>
           <span>{timeLeft}</span>
         </div>
       </div>

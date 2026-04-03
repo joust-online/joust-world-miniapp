@@ -212,7 +212,7 @@ function CreatePoolForm() {
           </select>
         </div>
         <div>
-          <label className="text-sm text-muted-foreground block mb-1">Min Joust</label>
+          <label className="text-sm text-muted-foreground block mb-1">Min Stake</label>
           <input
             type="number"
             step="any"
