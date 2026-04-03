@@ -1,7 +1,7 @@
 "use client";
 
-import { MiniKit } from "@worldcoin/minikit-js";
-import { ReactNode, useEffect } from "react";
+import { MiniKitProvider } from "@worldcoin/minikit-js/minikit-provider";
+import { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider, createConfig, http } from "wagmi";
 import { worldchain } from "wagmi/chains";
@@ -14,14 +14,6 @@ const wagmiConfig = createConfig({
     [worldchain.id]: http(),
   },
 });
-
-function MiniKitProvider({ children }: { children: ReactNode }) {
-  useEffect(() => {
-    MiniKit.install(process.env.NEXT_PUBLIC_APP_ID);
-  }, []);
-
-  return <>{children}</>;
-}
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
