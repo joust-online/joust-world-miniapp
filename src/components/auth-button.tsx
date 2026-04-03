@@ -39,6 +39,13 @@ export function AuthButton({ large }: { large?: boolean }) {
       if (res.ok) {
         queryClient.invalidateQueries({ queryKey: ["session"] });
         queryClient.invalidateQueries({ queryKey: ["profile"] });
+
+        // Request notification permission after successful auth
+        if (MiniKit.isInstalled()) {
+          try {
+            await MiniKit.commandsAsync.requestPermission({ permission: "notifications" as any });
+          } catch {}
+        }
       }
     } catch (err) {
       console.error("Sign in failed:", err);

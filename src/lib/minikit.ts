@@ -91,7 +91,7 @@ export async function requestVerification(action: string, signal?: string) {
   return result.finalPayload;
 }
 
-export async function sharePool(poolId: string, poolTitle: string, won?: boolean) {
+export async function sharePool(poolId: string, poolTitle: string, won?: boolean, closeAfter?: boolean) {
   const appId = process.env.NEXT_PUBLIC_APP_ID;
   await MiniKit.commandsAsync.share({
     title: `Joust: ${poolTitle}`,
@@ -100,6 +100,9 @@ export async function sharePool(poolId: string, poolTitle: string, won?: boolean
       : `Check out "${poolTitle}" on Joust!`,
     url: `https://world.org/mini-app?app_id=${appId}&path=/pool/${poolId}`,
   });
+  if (closeAfter) {
+    closeMiniApp();
+  }
 }
 
 export async function shareContacts(poolTitle: string) {
@@ -173,6 +176,11 @@ export async function acceptArbiterOnChain(poolId: bigint) {
 
 export async function closePoolOnChain(poolId: bigint) {
   return sendTransaction("closePool", [poolId]);
+}
+
+export function closeMiniApp() {
+  if (!MiniKit.isInstalled()) return;
+  (MiniKit.commandsAsync as any).closeMiniApp();
 }
 
 export function sendHaptic(type: "success" | "error" | "heavy") {
