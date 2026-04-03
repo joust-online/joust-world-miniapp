@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { Fira_Code, Jacquard_24 } from "next/font/google";
+import localFont from "next/font/local";
 import { Providers } from "@/components/providers";
 import { DevInfo } from "@/components/dev-info";
 import { VerificationWall } from "@/components/verification-wall";
@@ -27,8 +29,27 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#191919",
 };
+
+const jacquard = Jacquard_24({
+  variable: "--font-jacquard",
+  subsets: ["latin"],
+  weight: ["400"],
+  preload: true,
+  display: "swap",
+});
+
+const jeju = localFont({
+  src: "../fonts/JejuGothic.woff",
+  variable: "--font-jeju",
+});
+
+const firaMono = Fira_Code({
+  variable: "--font-fira-mono",
+  subsets: ["latin"],
+  preload: false,
+  display: "optional",
+});
 
 export default function RootLayout({
   children,
@@ -37,7 +58,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={cn("font-sans", geist.variable)}>
-      <body>
+      <body className={cn(jacquard.variable, jeju.variable, firaMono.variable, "dark")}>
         <Eruda />
         <Providers>
           <VerificationWall>
