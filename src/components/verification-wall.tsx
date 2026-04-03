@@ -14,7 +14,7 @@ export function VerificationWall({ children }: { children: React.ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-transparent">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
       </div>
     );
@@ -59,7 +59,7 @@ export function VerificationWall({ children }: { children: React.ReactNode }) {
     };
 
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background px-6 text-center">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-transparent px-6 text-center">
         <div className="w-20 h-20 rounded-full bg-accent/20 flex items-center justify-center text-4xl mb-6">
           🌐
         </div>
@@ -126,7 +126,7 @@ export function VerificationWall({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background px-6 text-center">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-transparent px-6 text-center">
       <div className="w-20 h-20 rounded-full bg-accent/20 flex items-center justify-center text-4xl mb-6">
         ⚔️
       </div>
