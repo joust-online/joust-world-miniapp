@@ -3,6 +3,7 @@ import Script from "next/script";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { DevInfo } from "@/components/dev-info";
+import { VerificationWall } from "@/components/verification-wall";
 
 export const metadata: Metadata = {
   title: "Joust",
@@ -44,8 +45,10 @@ export default function RootLayout({
           />
         )}
         <Providers>
-          {children}
-          <DevInfo />
+          <VerificationWall>
+            {children}
+            <DevInfo />
+          </VerificationWall>
         </Providers>
       </body>
     </html>
