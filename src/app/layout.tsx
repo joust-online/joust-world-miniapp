@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { DevInfo } from "@/components/dev-info";
 import { VerificationWall } from "@/components/verification-wall";
+import { Eruda } from "@/components/eruda";
 
 export const metadata: Metadata = {
   title: "Joust",
@@ -34,16 +34,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        {process.env.NODE_ENV === "development" && (
-          <Script
-            src="https://cdn.jsdelivr.net/npm/eruda"
-            strategy="afterInteractive"
-            onLoad={() => {
-              // @ts-expect-error eruda global
-              if (window.eruda) window.eruda.init();
-            }}
-          />
-        )}
+        <Eruda />
         <Providers>
           <VerificationWall>
             {children}
