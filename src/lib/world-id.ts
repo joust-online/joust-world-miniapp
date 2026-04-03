@@ -1,24 +1,4 @@
-import { verifyCloudProof, IVerifyResponse, ISuccessResult } from "@worldcoin/minikit-js";
-
-const APP_ID = process.env.NEXT_PUBLIC_APP_ID as `app_${string}`;
-
 export type VerificationLevel = "orb" | "device";
-
-export interface WorldIdProof {
-  merkle_root: string;
-  nullifier_hash: string;
-  proof: string;
-  verification_level: VerificationLevel;
-}
-
-export async function verifyWorldIdProof(
-  proof: ISuccessResult,
-  action: string,
-  signal?: string
-): Promise<IVerifyResponse> {
-  const response = await verifyCloudProof(proof, APP_ID, action, signal);
-  return response;
-}
 
 export function requireWorldId(
   worldIdVerified: boolean,
