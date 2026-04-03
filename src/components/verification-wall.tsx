@@ -30,18 +30,18 @@ export function VerificationWall({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
       try {
-        const result = await MiniKit.verify({
+        const result = await MiniKit.commandsAsync.verify({
           action: "verify-identity",
           verification_level: "device",
         });
-        if (result.executedWith === "fallback") {
-          throw new Error("Verification not available outside World App");
+        if (result.finalPayload.status === "error") {
+          throw new Error("Verification cancelled");
         }
         const res = await fetch("/api/verify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            proof: result.data,
+            proof: result.finalPayload,
             action: "verify-identity",
           }),
         });
@@ -101,20 +101,20 @@ export function VerificationWall({ children }: { children: React.ReactNode }) {
       const nonceRes = await fetch("/api/auth/nonce");
       const { nonce } = await nonceRes.json();
 
-      const result = await MiniKit.walletAuth({
+      const result = await MiniKit.commandsAsync.walletAuth({
         nonce,
         statement: "Sign in to Joust — prediction markets powered by World ID",
         expirationTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       });
 
-      if (result.executedWith === "fallback") {
-        throw new Error("Sign-in not available outside World App");
+      if (result.finalPayload.status === "error") {
+        throw new Error(result.finalPayload.error_code ?? "Sign-in cancelled");
       }
 
       const res = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ payload: result.data, nonce }),
+        body: JSON.stringify({ payload: result.finalPayload, nonce }),
       });
       if (res.ok) {
         queryClient.invalidateQueries({ queryKey: ["session"] });
