@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { useSession } from "@/hooks/use-profile";
-import { requestVerification } from "@/lib/minikit";
+import { IDKit, orbLegacy } from "@worldcoin/idkit-core";
+import { useQueryClient } from "@tanstack/react-query";
+
+const APP_ID = process.env.NEXT_PUBLIC_APP_ID!;
+const RP_ID = process.env.NEXT_PUBLIC_RP_ID || "rp_ad88363f9e1150a2";
 
 interface WorldIdGateProps {
   level: "device" | "orb";
@@ -13,7 +17,9 @@ interface WorldIdGateProps {
 
 export function WorldIdGate({ level, action = "verify-identity", children, fallback }: WorldIdGateProps) {
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const [verifying, setVerifying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!session?.authenticated) {
     return fallback ?? (
@@ -32,19 +38,49 @@ export function WorldIdGate({ level, action = "verify-identity", children, fallb
 
   const handleVerify = async () => {
     setVerifying(true);
+    setError(null);
     try {
-      const proof = await requestVerification(action);
-      // Send proof to server
-      const res = await fetch("/api/verify", {
+      const rpSig = await fetch("/api/worldid/rp-context", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ proof, action }),
+        body: JSON.stringify({ action }),
+      }).then((r) => r.json());
+
+      const request = await IDKit.request({
+        app_id: APP_ID as `app_${string}`,
+        action,
+        rp_context: {
+          rp_id: RP_ID,
+          nonce: rpSig.nonce,
+          created_at: rpSig.created_at,
+          expires_at: rpSig.expires_at,
+          signature: rpSig.sig,
+        },
+        allow_legacy_proofs: true,
+        environment: "production",
+      }).preset(orbLegacy());
+
+      const completion = await request.pollUntilCompletion({ timeout: 120000 });
+      if (!completion.success) {
+        throw new Error("Verification timed out or was cancelled");
+      }
+
+      const res = await fetch("/api/worldid/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idkitResponse: completion.result,
+          action,
+        }),
       });
       if (res.ok) {
-        window.location.reload();
+        queryClient.invalidateQueries({ queryKey: ["session"] });
+      } else {
+        const err = await res.json();
+        throw new Error(err.error ?? "Verification failed");
       }
     } catch (err) {
-      console.error("Verification failed:", err);
+      setError(err instanceof Error ? err.message : "Verification failed");
     } finally {
       setVerifying(false);
     }
@@ -65,6 +101,7 @@ export function WorldIdGate({ level, action = "verify-identity", children, fallb
             : "Verify with World ID to access this feature."}
         </p>
       </div>
+      {error && <p className="text-xs text-destructive mb-3">{error}</p>}
       <button
         onClick={handleVerify}
         disabled={verifying}
