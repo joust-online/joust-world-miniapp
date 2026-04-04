@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { TabNavigation } from "@/components/tab-navigation";
 import { WorldIdGate } from "@/components/world-id-gate";
@@ -25,6 +25,15 @@ function CreatePoolForm() {
   const [step, setStep] = useState<"form" | "deploying" | "recording" | "done">("form");
   const [poolId, setPoolId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [ethPrice, setEthPrice] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch("https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd")
+      .then((r) => r.json())
+      .then((d) => setEthPrice(d.ethereum?.usd ?? null))
+      .catch(() => {});
+  }, []);
+
   const [options, setOptions] = useState([
     { label: "Yes", joustType: 1, orderIndex: 0 },
     { label: "No", joustType: 2, orderIndex: 1 },
@@ -244,6 +253,11 @@ function CreatePoolForm() {
             required
             className="w-full bg-muted rounded-lg px-3 py-2.5 text-sm border border-border focus:border-accent outline-none"
           />
+          {ethPrice && parseFloat(minAmount) > 0 && (
+            <p className="text-xs text-muted-foreground mt-1">
+              ≈ ${(parseFloat(minAmount) * ethPrice).toFixed(2)} USD
+            </p>
+          )}
         </div>
       </div>
 

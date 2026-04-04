@@ -40,6 +40,9 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Always exclude pools that were never deployed on-chain
+  where.contractId = { not: null };
+
   const pools = await prisma.pool.findMany({
     where,
     take: limit,
@@ -53,7 +56,16 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  return NextResponse.json({ pools, nextCursor: pools.length === limit ? pools[pools.length - 1]?.id : null });
+  // Filter out expired empty pools (no jousts, not settled/refunded)
+  const now = new Date();
+  const filtered = pools.filter((pool) => {
+    const expired = pool.endTime < now;
+    const terminal = pool.state === "SETTLED" || pool.state === "REFUNDED";
+    if (expired && pool._count.jousts === 0 && !terminal) return false;
+    return true;
+  });
+
+  return NextResponse.json({ pools: filtered, nextCursor: pools.length === limit ? pools[pools.length - 1]?.id : null });
 }
 
 export async function POST(req: NextRequest) {

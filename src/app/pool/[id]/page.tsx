@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { usePool, useRecordTx } from "@/hooks/use-pool";
 import { useSession } from "@/hooks/use-profile";
@@ -117,7 +117,29 @@ export default function PoolDetailPage() {
 
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [amount, setAmount] = useState("");
+  const [ethPrice, setEthPrice] = useState<number | null>(null);
   const [showJoust, setShowJoust] = useState(false);
+
+  // Auto-fill min stake amount when pool loads
+  const [amountInitialized, setAmountInitialized] = useState(false);
+  useEffect(() => {
+    if (data?.pool && !amountInitialized) {
+      const c = getCollateralInfo(data.pool.collateral);
+      const min = formatAmount(BigInt(data.pool.minJoustAmount?.toString() ?? "0"), c.decimals);
+      if (min && min !== "0") {
+        setAmount(min);
+      }
+      setAmountInitialized(true);
+    }
+  }, [data?.pool, amountInitialized]);
+
+  // Fetch ETH price for USD display
+  useEffect(() => {
+    fetch("https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd")
+      .then((r) => r.json())
+      .then((d) => setEthPrice(d.ethereum?.usd ?? null))
+      .catch(() => {});
+  }, []);
 
   // Settle flow state
   const [showSettlePicker, setShowSettlePicker] = useState(false);
@@ -134,7 +156,8 @@ export default function PoolDetailPage() {
 
   const collateral = getCollateralInfo(pool.collateral);
   const total = BigInt(pool.totalAmountJousted?.toString() ?? "0");
-  const isActive = pool.state === "ACTIVE";
+  const expired = new Date(pool.endTime) < new Date();
+  const isActive = pool.state === "ACTIVE" && !expired;
   const isETH = pool.collateral.toLowerCase() === ETH_ADDRESS.toLowerCase();
   const contractId = pool.contractId != null ? BigInt(pool.contractId.toString()) : null;
 
@@ -279,11 +302,17 @@ export default function PoolDetailPage() {
 
       <div className="flex items-center gap-3 mb-4 text-xs text-muted-foreground">
         <span className={`font-medium ${
-          pool.state === "ACTIVE" ? "text-green-400" :
           pool.state === "SETTLED" ? "text-blue-400" :
-          pool.state === "REFUNDED" ? "text-red-400" : ""
+          pool.state === "REFUNDED" ? "text-red-400" :
+          expired ? (pool._count?.jousts > 0 ? "text-yellow-400" : "text-red-400") :
+          pool.state === "ACTIVE" ? "text-green-400" :
+          pool.state === "CLOSED" ? "text-orange-400" : ""
         }`}>
-          {pool.state}
+          {pool.state === "SETTLED" ? "SETTLED" :
+           pool.state === "REFUNDED" ? "REFUNDED" :
+           expired && pool._count?.jousts > 0 ? "AWAITING SETTLEMENT" :
+           expired ? "EXPIRED" :
+           pool.state}
         </span>
         <span>{formatAmount(total, collateral.decimals)} {collateral.symbol}</span>
         <span>{pool._count?.jousts ?? 0} predictions</span>
@@ -331,17 +360,22 @@ export default function PoolDetailPage() {
                   <p className="text-xs text-muted-foreground mb-2">
                     Predicting: {pool.options?.find((o: any) => o.joustType === selectedOption)?.label}
                   </p>
-                  <div className="flex gap-2 mb-3">
+                  <div className="flex gap-2 mb-2">
                     <input
                       type="number"
                       step="any"
-                      placeholder={`Min ${formatAmount(BigInt(pool.minJoustAmount?.toString() ?? "0"), collateral.decimals)}`}
+                      placeholder={formatAmount(BigInt(pool.minJoustAmount?.toString() ?? "0"), collateral.decimals)}
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
                       className="flex-1 bg-muted rounded-lg px-3 py-2.5 text-sm border border-border outline-none"
                     />
                     <span className="flex items-center text-sm text-muted-foreground">{collateral.symbol}</span>
                   </div>
+                  {ethPrice && (
+                    <p className="text-xs text-muted-foreground mb-3">
+                      ≈ ${((parseFloat(amount) || 0) * ethPrice).toFixed(2)} USD
+                    </p>
+                  )}
                   {contractId == null && (
                     <p className="text-xs text-red-400 mb-2">
                       Pool not yet deployed on-chain. Cannot stake predictions.

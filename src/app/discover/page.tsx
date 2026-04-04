@@ -5,7 +5,11 @@ import { usePools } from "@/hooks/use-pool";
 import { TabNavigation } from "@/components/tab-navigation";
 import { PoolCard } from "@/components/pool-card";
 
-const FILTERS = ["ACTIVE", "PENDING_ARBITER", "SETTLED", "REFUNDED"] as const;
+const FILTERS = [
+  { key: "ACTIVE", label: "Active" },
+  { key: "SETTLED", label: "Settled" },
+  { key: "REFUNDED", label: "Refunded" },
+] as const;
 
 export default function DiscoverPage() {
   const [filter, setFilter] = useState<string>("ACTIVE");
@@ -18,15 +22,15 @@ export default function DiscoverPage() {
       <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
         {FILTERS.map((f) => (
           <button
-            key={f}
-            onClick={() => setFilter(f)}
+            key={f.key}
+            onClick={() => setFilter(f.key)}
             className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-              filter === f
+              filter === f.key
                 ? "bg-accent text-white"
                 : "bg-muted text-muted-foreground"
             }`}
           >
-            {f.replace("_", " ")}
+            {f.label}
           </button>
         ))}
       </div>
