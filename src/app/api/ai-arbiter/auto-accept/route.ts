@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { agentAcceptArbiter } from "@/lib/agent-wallet";
-import { getAgentAddress } from "@/lib/agent-wallet";
+import { getSession } from "@/lib/session";
+import { agentAcceptArbiter, getAgentAddress } from "@/lib/agent-wallet";
 import { notifyUser } from "@/lib/notifications";
 
 export async function POST() {
+  const session = await getSession();
+  if (!session.userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const agentAddress = getAgentAddress();
 
   // Find all pools assigned to the AI agent wallet that are pending arbiter acceptance

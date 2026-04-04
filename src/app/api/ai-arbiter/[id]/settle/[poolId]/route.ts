@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/session";
 import { agentSettlePool, agentClosePool } from "@/lib/agent-wallet";
 import { determineOutcome } from "@/lib/ai-settler";
-import { verifyAgentRequest, settlementExtension, isAgentBookVerified } from "@/lib/agentkit";
+import { verifyAgentRequest, settlementExtension } from "@/lib/agentkit";
 import { notifyUser } from "@/lib/notifications";
 
 async function notifyAllJousters(
@@ -73,31 +74,39 @@ export async function POST(
       return NextResponse.json({ error: "No predictions to settle" }, { status: 400 });
     }
 
-    // ── AgentKit x402 verification ──
-    // Try to verify the request via AgentKit hooks (free-trial mode)
-    const path = `/api/ai-arbiter/${id}/settle/${poolId}`;
-    const verification = await verifyAgentRequest(req, path);
-
-    if (!verification.granted) {
-      // Return 402 with AgentKit extension info
-      // This tells the requesting agent how to authenticate
-      return NextResponse.json(
-        {
-          error: "Payment or agent verification required",
-          message: verification.error,
-          extensions: settlementExtension,
-          agentBook: {
-            network: "eip155:480",
-            info: "Register your agent at https://agentbook.world to get free trial access",
-          },
-        },
-        { status: 402 },
-      );
+    // Only settle if pool is CLOSED or expired
+    const expired = new Date(pool.endTime) < new Date();
+    if (pool.state === "ACTIVE" && !expired) {
+      return NextResponse.json({ error: "Pool is still active and not expired" }, { status: 400 });
     }
 
-    // ── Close pool on-chain if still active ──
+    // ── Dual auth: session (browser) OR AgentKit (agent-to-agent) ──
+    const session = await getSession();
+    const hasSession = !!session.userId;
+
+    if (!hasSession) {
+      // No browser session — try AgentKit x402 verification
+      const path = `/api/ai-arbiter/${id}/settle/${poolId}`;
+      const verification = await verifyAgentRequest(req, path);
+
+      if (!verification.granted) {
+        return NextResponse.json(
+          {
+            error: "Authentication required. Sign in or provide AgentKit credentials.",
+            message: verification.error,
+            extensions: settlementExtension,
+            agentBook: {
+              network: "eip155:480",
+              info: "Register your agent at https://agentbook.world to get free trial access",
+            },
+          },
+          { status: 402 },
+        );
+      }
+    }
+
+    // ── Close pool on-chain if still active + expired ──
     const contractId = BigInt(pool.contractId.toString());
-    const expired = new Date(pool.endTime) < new Date();
 
     if (pool.state === "ACTIVE" && expired) {
       try {

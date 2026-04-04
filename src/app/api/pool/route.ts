@@ -81,6 +81,21 @@ export async function POST(req: NextRequest) {
     }
 
     const data = parsed.data;
+
+    // Validate AI arbiter reference
+    if (data.aiArbiterId) {
+      const aiArbiter = await prisma.aiArbiter.findUnique({
+        where: { id: data.aiArbiterId },
+        select: { walletAddress: true },
+      });
+      if (!aiArbiter) {
+        return NextResponse.json({ error: "AI Arbiter not found" }, { status: 400 });
+      }
+      if (aiArbiter.walletAddress !== data.arbiterAddress.toLowerCase()) {
+        return NextResponse.json({ error: "Arbiter address does not match AI arbiter" }, { status: 400 });
+      }
+    }
+
     const isSelfArbiter = data.arbiterAddress.toLowerCase() === session.address.toLowerCase();
 
     const pool = await prisma.pool.create({

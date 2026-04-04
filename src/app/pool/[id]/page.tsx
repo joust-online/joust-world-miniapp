@@ -19,7 +19,7 @@ import { parseUnits } from "viem";
 import { useQueryClient } from "@tanstack/react-query";
 
 /* ── Pool lifecycle stages ── */
-const LIFECYCLE_STAGES = ["PENDING", "ACTIVE", "CLOSED", "SETTLED"] as const;
+const LIFECYCLE_STAGES = ["PENDING_ARBITER", "ACTIVE", "CLOSED", "SETTLED"] as const;
 
 function getPoolStatusDisplay(state: string, expired: boolean, joustCount: number): { text: string; color: string } {
   if (state === "SETTLED") return { text: "SETTLED", color: "text-blue-400" };
@@ -42,7 +42,7 @@ function PoolLifecycleBar({ state }: { state: string }) {
           {LIFECYCLE_STAGES.map((stage) => (
             <div key={stage} className="flex-1">
               <div className={`w-full h-1.5 rounded-full ${
-                stage === "PENDING" || stage === "ACTIVE"
+                stage === "PENDING_ARBITER" || stage === "ACTIVE"
                   ? "bg-red-400/60"
                   : "bg-muted"
               }`} />
@@ -294,7 +294,7 @@ export default function PoolDetailPage() {
   };
 
   /* ── Determine which arbiter actions are available ── */
-  const canAcceptArbiter = isArbiter && !pool.arbiterAccepted && pool.state === "PENDING";
+  const canAcceptArbiter = isArbiter && !pool.arbiterAccepted && pool.state === "PENDING_ARBITER";
   const canClosePool = isArbiter && pool.arbiterAccepted && pool.state === "ACTIVE";
   const canSettlePool = isArbiter && pool.arbiterAccepted && pool.state === "CLOSED";
   const canRefundPool = isArbiter && pool.arbiterAccepted && (pool.state === "ACTIVE" || pool.state === "CLOSED");
