@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSession } from "@/hooks/use-profile";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
 
 export function VerificationWall({ children }: { children: React.ReactNode }) {
   const { data: session, isLoading } = useSession();
@@ -73,7 +74,7 @@ export function VerificationWall({ children }: { children: React.ReactNode }) {
       <p className="text-muted-foreground mb-1 text-lg">Hypersocial Media</p>
       <p className="text-muted-foreground mb-8 max-w-xs text-sm">
         Put your reputation on the line. Stake convictions, challenge friends, and prove you know
-        what's up.
+        what&apos;s up.
       </p>
       <div className="mb-8 w-full max-w-xs space-y-3">
         <div className="flex items-center gap-3 text-left">
@@ -109,13 +110,9 @@ export function VerificationWall({ children }: { children: React.ReactNode }) {
         </div>
       </div>
       {error && <p className="text-destructive mb-3 text-xs">{error}</p>}
-      <button
-        onClick={handleSignIn}
-        disabled={loading}
-        className="bg-accent rounded-full px-8 py-3 text-base font-semibold text-white disabled:opacity-50"
-      >
+      <Button onClick={handleSignIn} disabled={loading} size="lg" className="px-8 font-semibold">
         {loading ? "Connecting..." : "Sign In with World App"}
-      </button>
+      </Button>
     </div>
   );
 }

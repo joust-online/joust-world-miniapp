@@ -9,6 +9,11 @@ import { AuthButton } from "@/components/auth-button";
 import { VerificationBadge } from "@/components/verification-badge";
 import { runWorldIdVerification } from "@/lib/world-id-verify";
 import { shortenAddress } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function resizeImage(file: File, maxSize: number): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -79,7 +84,15 @@ export default function ProfilePage() {
     return (
       <main className="px-4 pt-4 pb-20">
         <h1 className="mb-4 text-xl font-bold">Profile</h1>
-        <div className="text-muted-foreground py-8 text-center">Loading...</div>
+        <div className="space-y-4">
+          <Skeleton className="h-48 w-full rounded-xl" />
+          <Skeleton className="h-24 w-full rounded-xl" />
+          <div className="grid grid-cols-3 gap-3">
+            <Skeleton className="h-20 rounded-xl" />
+            <Skeleton className="h-20 rounded-xl" />
+            <Skeleton className="h-20 rounded-xl" />
+          </div>
+        </div>
         <TabNavigation />
       </main>
     );
@@ -93,178 +106,193 @@ export default function ProfilePage() {
 
       {user && (
         <div className="space-y-4">
-          <div className="bg-card border-border rounded-xl border p-4 text-center">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                setUploading(true);
-                try {
-                  const dataUrl = await resizeImage(file, 256);
-                  const res = await fetch("/api/profile", {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ pfp: dataUrl }),
-                  });
-                  if (res.ok) {
-                    queryClient.invalidateQueries({ queryKey: ["profile"] });
-                  }
-                } catch (err) {
-                  console.error("Upload failed:", err);
-                } finally {
-                  setUploading(false);
-                }
-              }}
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="bg-muted group relative mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-full text-2xl"
-            >
-              {user.pfp ? (
-                <img src={user.pfp} alt="" className="h-full w-full rounded-full object-cover" />
-              ) : (
-                "👤"
-              )}
-              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-                <span className="text-xs text-white">{uploading ? "..." : "Edit"}</span>
-              </div>
-            </button>
-            {editingName ? (
-              <div className="mt-1 mb-1 flex items-center justify-center gap-2">
-                <input
-                  value={newUsername}
-                  onChange={(e) => setNewUsername(e.target.value)}
-                  maxLength={50}
-                  autoFocus
-                  className="bg-muted border-border w-36 rounded-lg border px-2 py-1 text-center text-sm outline-none"
-                  onKeyDown={async (e) => {
-                    if (e.key === "Enter" && newUsername.trim()) {
-                      setSavingName(true);
-                      const res = await fetch("/api/profile", {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ username: newUsername.trim() }),
-                      });
-                      if (res.ok) {
-                        queryClient.invalidateQueries({ queryKey: ["profile"] });
-                        queryClient.invalidateQueries({ queryKey: ["session"] });
-                      }
-                      setSavingName(false);
-                      setEditingName(false);
+          <Card className="rounded-xl py-0 shadow-none">
+            <CardContent className="p-4 text-center">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setUploading(true);
+                  try {
+                    const dataUrl = await resizeImage(file, 256);
+                    const res = await fetch("/api/profile", {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ pfp: dataUrl }),
+                    });
+                    if (res.ok) {
+                      queryClient.invalidateQueries({ queryKey: ["profile"] });
                     }
-                    if (e.key === "Escape") setEditingName(false);
-                  }}
-                />
-                <button
-                  onClick={() => setEditingName(false)}
-                  className="text-muted-foreground text-xs"
-                >
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => {
-                  setNewUsername(user.username);
-                  setEditingName(true);
+                  } catch (err) {
+                    console.error("Upload failed:", err);
+                  } finally {
+                    setUploading(false);
+                  }
                 }}
-                className="hover:text-accent font-semibold transition-colors"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="group relative mx-auto mb-2 block"
               >
-                {user.username} <span className="text-muted-foreground text-xs">✏️</span>
+                <Avatar className="h-16 w-16">
+                  {user.pfp ? <AvatarImage src={user.pfp} alt={user.username} /> : null}
+                  <AvatarFallback className="text-2xl">👤</AvatarFallback>
+                </Avatar>
+                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                  <span className="text-xs text-white">{uploading ? "..." : "Edit"}</span>
+                </div>
               </button>
-            )}
-            <p className="text-muted-foreground text-xs">{shortenAddress(user.address)}</p>
-            <div className="mt-2 flex items-center justify-center gap-2">
-              <VerificationBadge level={user.worldIdLevel} size="lg" />
-            </div>
-          </div>
+              {editingName ? (
+                <div className="mt-1 mb-1 flex items-center justify-center gap-2">
+                  <Input
+                    value={newUsername}
+                    onChange={(e) => setNewUsername(e.target.value)}
+                    maxLength={50}
+                    autoFocus
+                    className="w-36 text-center text-sm"
+                    onKeyDown={async (e) => {
+                      if (e.key === "Enter" && newUsername.trim()) {
+                        setSavingName(true);
+                        const res = await fetch("/api/profile", {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ username: newUsername.trim() }),
+                        });
+                        if (res.ok) {
+                          queryClient.invalidateQueries({ queryKey: ["profile"] });
+                          queryClient.invalidateQueries({ queryKey: ["session"] });
+                        }
+                        setSavingName(false);
+                        setEditingName(false);
+                      }
+                      if (e.key === "Escape") setEditingName(false);
+                    }}
+                  />
+                  <Button
+                    variant="ghost"
+                    onClick={() => setEditingName(false)}
+                    className="text-muted-foreground h-auto p-0 text-xs"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setNewUsername(user.username);
+                    setEditingName(true);
+                  }}
+                  className="hover:text-accent h-auto p-0 font-semibold transition-colors"
+                >
+                  {user.username} <span className="text-muted-foreground text-xs">✏️</span>
+                </Button>
+              )}
+              <p className="text-muted-foreground text-xs">{shortenAddress(user.address)}</p>
+              <div className="mt-2 flex items-center justify-center gap-2">
+                <VerificationBadge level={user.worldIdLevel} size="lg" />
+              </div>
+            </CardContent>
+          </Card>
 
           {/* World ID Verification Section */}
-          <div className="bg-card border-border rounded-xl border p-4">
-            <h3 className="mb-3 text-sm font-semibold">World ID Verification</h3>
-            {user.worldIdVerified ? (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <VerificationBadge level={user.worldIdLevel} size="md" />
-                  <span className="text-muted-foreground text-sm">
-                    {user.worldIdLevel === "orb"
-                      ? "Orb-level proof of unique human"
-                      : "Device-level verification"}
-                  </span>
+          <Card className="rounded-xl py-0 shadow-none">
+            <CardContent className="p-4">
+              <h3 className="mb-3 text-sm font-semibold">World ID Verification</h3>
+              {user.worldIdVerified ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <VerificationBadge level={user.worldIdLevel} size="md" />
+                    <span className="text-muted-foreground text-sm">
+                      {user.worldIdLevel === "orb"
+                        ? "Orb-level proof of unique human"
+                        : "Device-level verification"}
+                    </span>
+                  </div>
+                  {user.worldIdVerifiedAt && (
+                    <p className="text-muted-foreground text-xs">
+                      Verified on {new Date(user.worldIdVerifiedAt).toLocaleDateString()}
+                    </p>
+                  )}
                 </div>
-                {user.worldIdVerifiedAt && (
-                  <p className="text-muted-foreground text-xs">
-                    Verified on {new Date(user.worldIdVerifiedAt).toLocaleDateString()}
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-muted-foreground text-sm">
+                    Verify with World ID to prove you are a unique human. Build trust as an arbiter
+                    and unlock the full Joust experience.
                   </p>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-muted-foreground text-sm">
-                  Verify with World ID to prove you are a unique human. Build trust as an arbiter
-                  and unlock the full Joust experience.
-                </p>
-                {verifyError && <p className="text-destructive text-xs">{verifyError}</p>}
-                <button
-                  onClick={async () => {
-                    setVerifying(true);
-                    setVerifyError(null);
-                    try {
-                      await runWorldIdVerification("verify-identity");
-                      queryClient.invalidateQueries({ queryKey: ["session"] });
-                      queryClient.invalidateQueries({ queryKey: ["profile"] });
-                    } catch (err) {
-                      setVerifyError(err instanceof Error ? err.message : "Verification failed");
-                    } finally {
-                      setVerifying(false);
-                    }
-                  }}
-                  disabled={verifying}
-                  className="bg-accent w-full rounded-xl py-2.5 text-sm font-medium text-white disabled:opacity-50"
-                >
-                  {verifying ? "Verifying..." : "Verify with World ID"}
-                </button>
-              </div>
-            )}
-          </div>
+                  {verifyError && <p className="text-destructive text-xs">{verifyError}</p>}
+                  <Button
+                    onClick={async () => {
+                      setVerifying(true);
+                      setVerifyError(null);
+                      try {
+                        await runWorldIdVerification("verify-identity");
+                        queryClient.invalidateQueries({ queryKey: ["session"] });
+                        queryClient.invalidateQueries({ queryKey: ["profile"] });
+                      } catch (err) {
+                        setVerifyError(err instanceof Error ? err.message : "Verification failed");
+                      } finally {
+                        setVerifying(false);
+                      }
+                    }}
+                    disabled={verifying}
+                    className="w-full"
+                  >
+                    {verifying ? "Verifying..." : "Verify with World ID"}
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           <div className="grid grid-cols-3 gap-3">
-            <div className="bg-card border-border rounded-xl border p-3 text-center">
-              <div className="text-lg font-bold">{user._count?.jousts ?? 0}</div>
-              <div className="text-muted-foreground text-xs">Predictions</div>
-            </div>
-            <div className="bg-card border-border rounded-xl border p-3 text-center">
-              <div className="text-lg font-bold text-green-400">{user.winCount ?? 0}</div>
-              <div className="text-muted-foreground text-xs">Wins</div>
-            </div>
-            <div className="bg-card border-border rounded-xl border p-3 text-center">
-              <div className="text-lg font-bold">{user._count?.createdPools ?? 0}</div>
-              <div className="text-muted-foreground text-xs">Pools</div>
-            </div>
+            <Card className="rounded-xl py-0 shadow-none">
+              <CardContent className="p-3 text-center">
+                <div className="text-lg font-bold">{user._count?.jousts ?? 0}</div>
+                <div className="text-muted-foreground text-xs">Predictions</div>
+              </CardContent>
+            </Card>
+            <Card className="rounded-xl py-0 shadow-none">
+              <CardContent className="p-3 text-center">
+                <div className="text-lg font-bold text-green-400">{user.winCount ?? 0}</div>
+                <div className="text-muted-foreground text-xs">Wins</div>
+              </CardContent>
+            </Card>
+            <Card className="rounded-xl py-0 shadow-none">
+              <CardContent className="p-3 text-center">
+                <div className="text-lg font-bold">{user._count?.createdPools ?? 0}</div>
+                <div className="text-muted-foreground text-xs">Pools</div>
+              </CardContent>
+            </Card>
           </div>
 
           {user.honorScore && (
-            <div className="bg-card border-border rounded-xl border p-4">
-              <h3 className="mb-2 text-sm font-semibold">Arbiter Honor</h3>
-              <div className="flex items-center gap-4">
-                <span className="text-green-400">+{user.honorScore.totalUpvotes}</span>
-                <span className="text-destructive">-{user.honorScore.totalDownvotes}</span>
-                <span className="text-muted-foreground text-sm">
-                  Score: {user.honorScore.score.toFixed(1)}
-                </span>
-              </div>
-            </div>
+            <Card className="rounded-xl py-0 shadow-none">
+              <CardContent className="p-4">
+                <h3 className="mb-2 text-sm font-semibold">Arbiter Honor</h3>
+                <div className="flex items-center gap-4">
+                  <span className="text-green-400">+{user.honorScore.totalUpvotes}</span>
+                  <span className="text-destructive">-{user.honorScore.totalDownvotes}</span>
+                  <span className="text-muted-foreground text-sm">
+                    Score: {user.honorScore.score.toFixed(1)}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
           )}
 
-          <div className="bg-card border-border rounded-xl border p-4">
-            <div className="text-muted-foreground mb-1 text-sm">Points</div>
-            <div className="text-2xl font-bold">{user.totalPoints}</div>
-          </div>
+          <Card className="rounded-xl py-0 shadow-none">
+            <CardContent className="p-4">
+              <div className="text-muted-foreground mb-1 text-sm">Points</div>
+              <div className="text-2xl font-bold">{user.totalPoints}</div>
+            </CardContent>
+          </Card>
 
           {myPoolsData?.pools?.length > 0 && (
             <div>

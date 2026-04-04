@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useSession } from "@/hooks/use-profile";
 import { WorldIdGate } from "./world-id-gate";
 import { sendHaptic } from "@/lib/minikit";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface HonorVoteProps {
   arbiterId: number;
@@ -46,32 +48,35 @@ export function HonorVote({ arbiterId, arbiterUsername, poolId, poolTitle }: Hon
 
   return (
     <WorldIdGate level="orb" action="honor-vote">
-      <div className="bg-card border-border rounded-xl border p-4">
-        <h3 className="mb-1 text-sm font-semibold">Rate Arbiter</h3>
-        <p className="text-muted-foreground mb-3 text-xs">
-          Was {arbiterUsername} a fair arbiter for "{poolTitle}"?
-        </p>
-        {voted ? (
-          <p className="text-accent text-center text-xs">Thanks for voting!</p>
-        ) : (
-          <div className="flex gap-2">
-            <button
-              onClick={() => handleVote("UPVOTE")}
-              disabled={loading}
-              className="flex-1 rounded-lg bg-green-500/20 py-2 text-sm font-medium text-green-400 disabled:opacity-50"
-            >
-              Fair
-            </button>
-            <button
-              onClick={() => handleVote("DOWNVOTE")}
-              disabled={loading}
-              className="flex-1 rounded-lg bg-red-500/20 py-2 text-sm font-medium text-red-400 disabled:opacity-50"
-            >
-              Unfair
-            </button>
-          </div>
-        )}
-      </div>
+      <Card className="rounded-xl py-0 shadow-none">
+        <CardContent className="p-4">
+          <h3 className="mb-1 text-sm font-semibold">Rate Arbiter</h3>
+          <p className="text-muted-foreground mb-3 text-xs">
+            Was {arbiterUsername} a fair arbiter for &quot;{poolTitle}&quot;?
+          </p>
+          {voted ? (
+            <p className="text-accent text-center text-xs">Thanks for voting!</p>
+          ) : (
+            <div className="flex gap-2">
+              <Button
+                onClick={() => handleVote("UPVOTE")}
+                disabled={loading}
+                className="flex-1 bg-green-500/20 text-green-400 hover:bg-green-500/30"
+              >
+                Fair
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => handleVote("DOWNVOTE")}
+                disabled={loading}
+                className="flex-1"
+              >
+                Unfair
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </WorldIdGate>
   );
 }

@@ -8,10 +8,13 @@ import { PoolCard } from "@/components/pool-card";
 import { VerificationBadge } from "@/components/verification-badge";
 import { NotificationBell } from "@/components/notification-bell";
 import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function HomePage() {
   const { data: session } = useSession();
-  const { data: activePools } = usePools("ACTIVE");
+  const { data: activePools, isLoading: poolsLoading } = usePools("ACTIVE");
   const { data: myJousts } = useMyJousts(session?.user?.userId);
 
   return (
@@ -54,7 +57,13 @@ export default function HomePage() {
         <h2 className="text-muted-foreground mb-3 text-sm font-semibold tracking-wide uppercase">
           Active Pools
         </h2>
-        {activePools?.pools?.length ? (
+        {poolsLoading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-28 w-full rounded-xl" />
+            <Skeleton className="h-28 w-full rounded-xl" />
+            <Skeleton className="h-28 w-full rounded-xl" />
+          </div>
+        ) : activePools?.pools?.length ? (
           <div className="space-y-3">
             {activePools.pools.slice(0, 5).map((pool: any) => (
               <PoolCard key={pool.id} pool={pool} />
@@ -79,29 +88,36 @@ export default function HomePage() {
               const isSettled = pool?.state === "SETTLED";
               const isWin = isSettled && pool?.winningJoustType === joust.joustType;
 
-              function getJoustStatus(): { text: string; color: string } {
-                if (!isSettled) return { text: "Pending", color: "text-yellow-400" };
-                if (isWin) return { text: "Won", color: "text-green-400" };
-                return { text: "Lost", color: "text-red-400" };
+              function getJoustStatus(): {
+                text: string;
+                variant: "default" | "secondary" | "destructive" | "outline";
+              } {
+                if (!isSettled) return { text: "Pending", variant: "outline" };
+                if (isWin) return { text: "Won", variant: "default" };
+                return { text: "Lost", variant: "destructive" };
               }
               const status = getJoustStatus();
 
               return (
                 <Link key={joust.id} href={`/pool/${pool?.id}`} className="block">
-                  <div className="bg-card border-border hover:border-accent/30 rounded-xl border p-3 transition-colors">
-                    <div className="mb-1 flex items-start justify-between">
-                      <span className="mr-2 flex-1 truncate text-sm font-medium">
-                        {pool?.title ?? "Unknown pool"}
-                      </span>
-                      <span className={`text-xs font-medium ${status.color}`}>{status.text}</span>
-                    </div>
-                    <div className="text-muted-foreground flex items-center gap-2 text-xs">
-                      <span className="bg-muted rounded-full px-2 py-0.5">
-                        {option?.label ?? `Option ${joust.joustType}`}
-                      </span>
-                      <span>{joust.amount} staked</span>
-                    </div>
-                  </div>
+                  <Card className="hover:border-accent/30 rounded-xl py-0 shadow-none transition-colors">
+                    <CardContent className="p-3">
+                      <div className="mb-1 flex items-start justify-between">
+                        <span className="mr-2 flex-1 truncate text-sm font-medium">
+                          {pool?.title ?? "Unknown pool"}
+                        </span>
+                        <Badge variant={status.variant} className="text-xs">
+                          {status.text}
+                        </Badge>
+                      </div>
+                      <div className="text-muted-foreground flex items-center gap-2 text-xs">
+                        <Badge variant="secondary" className="rounded-full text-xs">
+                          {option?.label ?? `Option ${joust.joustType}`}
+                        </Badge>
+                        <span>{joust.amount} staked</span>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </Link>
               );
             })}
