@@ -12,7 +12,7 @@ model User {
   id              Int      @id @default(autoincrement())
   username        String   @unique @db.VarChar(50)
   address         String   @unique @db.VarChar(42)
-  pfp             String?  @db.VarChar(255)
+  pfp             String?  @db.Text
   worldIdVerified Boolean  @default(false)
   worldIdLevel    String?  @db.VarChar(10) // "orb" or "device"
   totalPoints     Int      @default(0)

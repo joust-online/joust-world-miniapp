@@ -1,15 +1,50 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { useProfile, useSession } from "@/hooks/use-profile";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { TabNavigation } from "@/components/tab-navigation";
 import { PoolCard } from "@/components/pool-card";
 import { AuthButton } from "@/components/auth-button";
 import { shortenAddress } from "@/lib/utils";
 
+function resizeImage(file: File, maxSize: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let { width, height } = img;
+        if (width > maxSize || height > maxSize) {
+          if (width > height) {
+            height = (height / width) * maxSize;
+            width = maxSize;
+          } else {
+            width = (width / height) * maxSize;
+            height = maxSize;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", 0.7));
+      };
+      img.onerror = reject;
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function ProfilePage() {
   const { data: session } = useSession();
   const { data: profileData, isLoading } = useProfile();
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
   const { data: myPoolsData } = useQuery({
     queryKey: ["pools", "my"],
     queryFn: async () => {
@@ -52,13 +87,46 @@ export default function ProfilePage() {
       {user && (
         <div className="space-y-4">
           <div className="bg-card rounded-xl border border-border p-4 text-center">
-            <div className="w-16 h-16 mx-auto mb-2 rounded-full bg-muted flex items-center justify-center text-2xl">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setUploading(true);
+                try {
+                  const dataUrl = await resizeImage(file, 256);
+                  const res = await fetch("/api/profile", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ pfp: dataUrl }),
+                  });
+                  if (res.ok) {
+                    queryClient.invalidateQueries({ queryKey: ["profile"] });
+                  }
+                } catch (err) {
+                  console.error("Upload failed:", err);
+                } finally {
+                  setUploading(false);
+                }
+              }}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="relative w-16 h-16 mx-auto mb-2 rounded-full bg-muted flex items-center justify-center text-2xl group"
+            >
               {user.pfp ? (
                 <img src={user.pfp} alt="" className="w-full h-full rounded-full object-cover" />
               ) : (
                 "👤"
               )}
-            </div>
+              <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="text-xs text-white">{uploading ? "..." : "Edit"}</span>
+              </div>
+            </button>
             <h2 className="font-semibold">{user.username}</h2>
             <p className="text-xs text-muted-foreground">{shortenAddress(user.address)}</p>
             <div className="flex items-center justify-center gap-2 mt-2">
