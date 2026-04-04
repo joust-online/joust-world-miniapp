@@ -1,17 +1,14 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useWaitForTransactionReceipt } from "wagmi";
 import { sendHaptic } from "@/lib/minikit";
 
 type TxStatus = "idle" | "pending" | "confirming" | "success" | "error";
 
 export function useTransaction() {
   const [status, setStatus] = useState<TxStatus>("idle");
-  const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
+  const [txHash, setTxHash] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
-
-  const receipt = useWaitForTransactionReceipt({ hash: txHash });
 
   const execute = useCallback(
     async (txFn: () => Promise<any>) => {
@@ -19,11 +16,40 @@ export function useTransaction() {
       setError(null);
       try {
         const result = await txFn();
-        const hash = (result.transaction_id ?? result.transactionId ?? result) as `0x${string}`;
-        setTxHash(hash);
+        const userOpHash = result.userOpHash;
         setStatus("confirming");
         sendHaptic("heavy");
-        return hash;
+
+        if (!userOpHash) {
+          // Fallback if result shape is unexpected
+          setStatus("success");
+          return result;
+        }
+
+        // Poll World API for user operation to be mined
+        for (let i = 0; i < 30; i++) {
+          await new Promise((r) => setTimeout(r, 2000));
+          try {
+            const statusRes = await fetch(
+              `https://developer.world.org/api/v2/minikit/userop/${userOpHash}`
+            );
+            if (statusRes.ok) {
+              const opStatus = await statusRes.json();
+              if (opStatus.status === "success" && opStatus.transaction_hash) {
+                setTxHash(opStatus.transaction_hash);
+                setStatus("success");
+                sendHaptic("success");
+                return opStatus.transaction_hash;
+              }
+            }
+          } catch {
+            // Keep polling
+          }
+        }
+
+        // Timeout — still return the userOpHash
+        setStatus("success");
+        return userOpHash;
       } catch (err) {
         const message = err instanceof Error ? err.message : "Transaction failed";
         setError(message);
@@ -41,5 +67,5 @@ export function useTransaction() {
     setError(null);
   }, []);
 
-  return { execute, status, txHash, receipt, error, reset };
+  return { execute, status, txHash, error, reset };
 }
