@@ -19,15 +19,17 @@ interface PoolCardProps {
   };
 }
 
-function stateLabel(state: string) {
-  const map: Record<string, { text: string; color: string }> = {
-    ACTIVE: { text: "Active", color: "text-green-400" },
-    PENDING_ARBITER: { text: "Pending", color: "text-yellow-400" },
-    CLOSED: { text: "Closed", color: "text-orange-400" },
-    SETTLED: { text: "Settled", color: "text-blue-400" },
-    REFUNDED: { text: "Refunded", color: "text-muted-foreground" },
-  };
-  return map[state] ?? { text: state, color: "text-muted-foreground" };
+function getDisplayState(state: string, endTime: string, joustCount: number) {
+  const expired = new Date(endTime) < new Date();
+
+  if (state === "SETTLED") return { text: "Settled", color: "text-blue-400" };
+  if (state === "REFUNDED") return { text: "Refunded", color: "text-muted-foreground" };
+  if (state === "CLOSED" && !expired) return { text: "Closed", color: "text-orange-400" };
+  if (expired && joustCount > 0) return { text: "Awaiting Settlement", color: "text-yellow-400" };
+  if (expired) return { text: "Expired", color: "text-red-400" };
+  if (state === "PENDING_ARBITER") return { text: "Pending Arbiter", color: "text-yellow-400" };
+  if (state === "ACTIVE") return { text: "Active", color: "text-green-400" };
+  return { text: state, color: "text-muted-foreground" };
 }
 
 export function PoolCard({ pool }: PoolCardProps) {
@@ -35,8 +37,9 @@ export function PoolCard({ pool }: PoolCardProps) {
   const total = typeof pool.totalAmountJousted === "string"
     ? BigInt(pool.totalAmountJousted)
     : pool.totalAmountJousted;
-  const state = stateLabel(pool.state);
-  const timeLeft = formatDistanceToNow(new Date(pool.endTime), { addSuffix: true });
+  const state = getDisplayState(pool.state, pool.endTime, pool._count.jousts);
+  const expired = new Date(pool.endTime) < new Date();
+  const timeLabel = expired ? `Ended ${formatDistanceToNow(new Date(pool.endTime), { addSuffix: true })}` : `Ends ${formatDistanceToNow(new Date(pool.endTime), { addSuffix: true })}`;
 
   return (
     <Link href={`/pool/${pool.id}`} className="block">
@@ -55,7 +58,7 @@ export function PoolCard({ pool }: PoolCardProps) {
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>{formatAmount(total, collateral.decimals)} {collateral.symbol} pooled</span>
           <span>{pool._count.jousts} predictions</span>
-          <span>{timeLeft}</span>
+          <span>{timeLabel}</span>
         </div>
       </div>
     </Link>

@@ -134,7 +134,8 @@ export default function PoolDetailPage() {
 
   const collateral = getCollateralInfo(pool.collateral);
   const total = BigInt(pool.totalAmountJousted?.toString() ?? "0");
-  const isActive = pool.state === "ACTIVE";
+  const expired = new Date(pool.endTime) < new Date();
+  const isActive = pool.state === "ACTIVE" && !expired;
   const isETH = pool.collateral.toLowerCase() === ETH_ADDRESS.toLowerCase();
   const contractId = pool.contractId != null ? BigInt(pool.contractId.toString()) : null;
 
@@ -279,11 +280,17 @@ export default function PoolDetailPage() {
 
       <div className="flex items-center gap-3 mb-4 text-xs text-muted-foreground">
         <span className={`font-medium ${
-          pool.state === "ACTIVE" ? "text-green-400" :
           pool.state === "SETTLED" ? "text-blue-400" :
-          pool.state === "REFUNDED" ? "text-red-400" : ""
+          pool.state === "REFUNDED" ? "text-red-400" :
+          expired ? (pool._count?.jousts > 0 ? "text-yellow-400" : "text-red-400") :
+          pool.state === "ACTIVE" ? "text-green-400" :
+          pool.state === "CLOSED" ? "text-orange-400" : ""
         }`}>
-          {pool.state}
+          {pool.state === "SETTLED" ? "SETTLED" :
+           pool.state === "REFUNDED" ? "REFUNDED" :
+           expired && pool._count?.jousts > 0 ? "AWAITING SETTLEMENT" :
+           expired ? "EXPIRED" :
+           pool.state}
         </span>
         <span>{formatAmount(total, collateral.decimals)} {collateral.symbol}</span>
         <span>{pool._count?.jousts ?? 0} predictions</span>
