@@ -21,12 +21,12 @@ export default function LeaderboardPage() {
     <main className="px-4 pt-4 pb-20">
       <h1 className="mb-4 text-xl font-bold">Leaderboard</h1>
 
-      <Tabs defaultValue="arbiters">
-        <TabsList className="mb-4 w-full">
-          <TabsTrigger value="arbiters" className="flex-1">
+      <Tabs defaultValue="arbiters" className="flex flex-col">
+        <TabsList className="mb-4 w-full rounded-xl">
+          <TabsTrigger value="arbiters" className="flex-1 rounded-lg">
             Top Arbiters
           </TabsTrigger>
-          <TabsTrigger value="jousters" className="flex-1">
+          <TabsTrigger value="jousters" className="flex-1 rounded-lg">
             Top Predictors
           </TabsTrigger>
         </TabsList>
@@ -37,7 +37,7 @@ export default function LeaderboardPage() {
           ) : (
             <div className="space-y-2">
               {data?.topArbiters?.map((item: any, i: number) => (
-                <Card key={item.arbiterId} className="rounded-xl py-0 shadow-none">
+                <Card key={item.arbiterId} className="rounded-xl py-0 shadow-none overflow-visible">
                   <CardContent className="flex items-center gap-3 p-3">
                     <span className="text-muted-foreground w-6 text-center text-lg font-bold">
                       {i + 1}
@@ -75,7 +75,7 @@ export default function LeaderboardPage() {
           ) : (
             <div className="space-y-2">
               {data?.topJousters?.map((item: any, i: number) => (
-                <Card key={item.id} className="rounded-xl py-0 shadow-none">
+                <Card key={item.id} className="rounded-xl py-0 shadow-none overflow-visible">
                   <CardContent className="flex items-center gap-3 p-3">
                     <span className="text-muted-foreground w-6 text-center text-lg font-bold">
                       {i + 1}
