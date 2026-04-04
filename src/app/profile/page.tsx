@@ -280,7 +280,7 @@ export default function ProfilePage() {
                   <span className="text-green-400">+{user.honorScore.totalUpvotes}</span>
                   <span className="text-destructive">-{user.honorScore.totalDownvotes}</span>
                   <span className="text-muted-foreground text-sm">
-                    Score: {user.honorScore.score.toFixed(1)}
+                    Score: {user.honorScore.score}
                   </span>
                 </div>
               </CardContent>

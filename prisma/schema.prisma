@@ -54,6 +54,7 @@ model Pool {
   state              PoolState @default(PENDING_ARBITER)
   endTime            DateTime
   contractEndTime    Int       @default(0)
+  deployTxHash       String?   @db.VarChar(66)
   deployedAt         DateTime?
   closedAt           DateTime?
   settledAt          DateTime?
@@ -176,7 +177,7 @@ model HonorScore {
   arbiterId      Int   @id
   totalUpvotes   Int   @default(0)
   totalDownvotes Int   @default(0)
-  score          Float @default(0)
+  score          Int   @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

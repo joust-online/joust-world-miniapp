@@ -55,7 +55,7 @@ export default function LeaderboardPage() {
                       </div>
                     </div>
                     <span className="text-accent text-sm font-semibold">
-                      {item.score.toFixed(1)}
+                      {item.score}
                     </span>
                   </CardContent>
                 </Card>

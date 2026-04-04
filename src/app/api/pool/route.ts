@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { requireSession, getSession } from "@/lib/session";
-import { requireWorldId } from "@/lib/world-id";
+import { PoolState } from "@/generated/prisma";
 
 const createPoolSchema = z.object({
   title: z.string().min(1).max(200),
@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
   const now = new Date();
   const filtered = pools.filter((pool) => {
     const expired = pool.endTime < now;
-    const terminal = pool.state === "SETTLED" || pool.state === "REFUNDED";
+    const terminal = pool.state === PoolState.SETTLED || pool.state === PoolState.REFUNDED;
     if (expired && pool._count.jousts === 0 && !terminal) return false;
     return true;
   });
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
         collateral: data.collateral.toLowerCase(),
         minJoustAmount: BigInt(data.minJoustAmount),
         supportedJoustTypes: data.options.length,
-        state: isSelfArbiter ? "ACTIVE" : "PENDING_ARBITER",
+        state: isSelfArbiter ? PoolState.ACTIVE : PoolState.PENDING_ARBITER,
         endTime: new Date(data.endTime),
         options: {
           create: data.options.map((opt) => ({

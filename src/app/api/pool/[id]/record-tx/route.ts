@@ -9,6 +9,7 @@ import {
   requireEvent,
   TxVerificationError,
 } from "@/lib/tx-verify";
+import { PoolState } from "@/generated/prisma";
 
 /** Notify all unique jousters in a pool. */
 async function notifyAllJousters(
@@ -121,7 +122,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           where: { id },
           data: {
             arbiterAccepted: true,
-            state: "ACTIVE",
+            state: PoolState.ACTIVE,
             ...(arbiterUser ? { arbiterId: arbiterUser.id } : {}),
           },
         });
@@ -157,7 +158,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
         updatedPool = await prisma.pool.update({
           where: { id },
-          data: { state: "CLOSED", closedAt: new Date() },
+          data: { state: PoolState.CLOSED, closedAt: new Date() },
         });
         break;
       }
@@ -184,7 +185,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
         updatedPool = await prisma.pool.update({
           where: { id },
-          data: { state: "SETTLED", winningJoustType, settledAt: new Date() },
+          data: { state: PoolState.SETTLED, winningJoustType, settledAt: new Date() },
         });
         await prisma.joust.updateMany({
           where: { poolId: id, joustType: winningJoustType },
@@ -214,7 +215,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
         updatedPool = await prisma.pool.update({
           where: { id },
-          data: { state: "REFUNDED", refundedAt: new Date() },
+          data: { state: PoolState.REFUNDED, refundedAt: new Date() },
         });
         await notifyAllJousters(
           id,

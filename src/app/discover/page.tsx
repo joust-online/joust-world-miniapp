@@ -5,15 +5,16 @@ import { usePools } from "@/hooks/use-pool";
 import { TabNavigation } from "@/components/tab-navigation";
 import { PoolCard } from "@/components/pool-card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { PoolState } from "@/generated/prisma";
 
 const FILTERS = [
-  { key: "ACTIVE", label: "Active" },
-  { key: "SETTLED", label: "Settled" },
-  { key: "REFUNDED", label: "Refunded" },
+  { key: PoolState.ACTIVE, label: "Active" },
+  { key: PoolState.SETTLED, label: "Settled" },
+  { key: PoolState.REFUNDED, label: "Refunded" },
 ] as const;
 
 export default function DiscoverPage() {
-  const [filter, setFilter] = useState<string>("ACTIVE");
+  const [filter, setFilter] = useState<string>(PoolState.ACTIVE);
   const { data, isLoading } = usePools(filter);
 
   return (

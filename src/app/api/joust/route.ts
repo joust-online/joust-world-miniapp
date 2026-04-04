@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
 import { getDeviceJoustLimit } from "@/lib/world-id";
 import { notifyUser } from "@/lib/notifications";
+import { PoolState } from "@/generated/prisma";
 import { getVerifiedReceipt, decodeContractLogs, TxVerificationError } from "@/lib/tx-verify";
 
 const createJoustSchema = z.object({
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest) {
     if (!pool) {
       return NextResponse.json({ error: "Pool not found" }, { status: 404 });
     }
-    if (pool.state !== "ACTIVE") {
+    if (pool.state !== PoolState.ACTIVE) {
       return NextResponse.json({ error: "Pool is not active" }, { status: 400 });
     }
 
