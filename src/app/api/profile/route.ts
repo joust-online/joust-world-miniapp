@@ -5,7 +5,7 @@ import { getSession, requireSession } from "@/lib/session";
 
 const updateProfileSchema = z.object({
   username: z.string().min(1).max(50).optional(),
-  pfp: z.string().url().max(255).optional(),
+  pfp: z.string().max(200000).optional(), // data URL or regular URL
 });
 
 export async function GET() {
