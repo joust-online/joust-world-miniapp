@@ -12,7 +12,6 @@ export const ETH_ADDRESS = "0x0000000000000000000000000000000000000000" as Addre
 
 export const COLLATERAL_TOKENS: Record<string, { symbol: string; decimals: number; address: Address }> = {
   ETH: { symbol: "ETH", decimals: 18, address: ETH_ADDRESS },
-  USDC: { symbol: "USDC", decimals: 6, address: USDC_ADDRESS },
 };
 
 /** Look up collateral token info by on-chain address. */
