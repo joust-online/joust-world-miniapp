@@ -120,9 +120,15 @@ export default function HomePage() {
                         <span>
                           {formatTokenAmount(
                             BigInt(joust.amount?.toString() ?? "0"),
-                            getCollateralInfo(pool?.collateral ?? "0x0000000000000000000000000000000000000000").decimals,
+                            getCollateralInfo(
+                              pool?.collateral ?? "0x0000000000000000000000000000000000000000",
+                            ).decimals,
                           )}{" "}
-                          {getCollateralInfo(pool?.collateral ?? "0x0000000000000000000000000000000000000000").symbol}{" "}
+                          {
+                            getCollateralInfo(
+                              pool?.collateral ?? "0x0000000000000000000000000000000000000000",
+                            ).symbol
+                          }{" "}
                           staked
                         </span>
                       </div>

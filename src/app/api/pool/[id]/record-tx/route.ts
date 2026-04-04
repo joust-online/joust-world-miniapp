@@ -9,12 +9,12 @@ import {
   requireEvent,
   TxVerificationError,
 } from "@/lib/tx-verify";
-import { PoolState } from "@/generated/prisma";
+import { PoolState, NotificationType } from "@/generated/prisma";
 
 /** Notify all unique jousters in a pool. */
 async function notifyAllJousters(
   poolId: string,
-  type: string,
+  type: NotificationType,
   title: string,
   body: string,
 ): Promise<void> {
@@ -104,9 +104,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       case "accept-arbiter": {
         // Verify PoolCreated event matches this pool's contractId
         const matchingEvent = decodedLogs.find(
-          (e) =>
-            e.eventName === "PoolCreated" &&
-            BigInt(e.args.id as bigint) === pool.contractId,
+          (e) => e.eventName === "PoolCreated" && BigInt(e.args.id as bigint) === pool.contractId,
         );
         if (!matchingEvent) {
           return NextResponse.json(
@@ -145,9 +143,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
       case "close": {
         const matchingEvent = decodedLogs.find(
-          (e) =>
-            e.eventName === "PoolClosed" &&
-            BigInt(e.args.id as bigint) === pool.contractId,
+          (e) => e.eventName === "PoolClosed" && BigInt(e.args.id as bigint) === pool.contractId,
         );
         if (!matchingEvent) {
           return NextResponse.json(
@@ -172,9 +168,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         }
 
         const matchingEvent = decodedLogs.find(
-          (e) =>
-            e.eventName === "PoolSettled" &&
-            BigInt(e.args.id as bigint) === pool.contractId,
+          (e) => e.eventName === "PoolSettled" && BigInt(e.args.id as bigint) === pool.contractId,
         );
         if (!matchingEvent) {
           return NextResponse.json(
@@ -202,9 +196,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
       case "refund": {
         const matchingEvent = decodedLogs.find(
-          (e) =>
-            e.eventName === "PoolRefunded" &&
-            BigInt(e.args.id as bigint) === pool.contractId,
+          (e) => e.eventName === "PoolRefunded" && BigInt(e.args.id as bigint) === pool.contractId,
         );
         if (!matchingEvent) {
           return NextResponse.json(

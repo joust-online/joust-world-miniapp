@@ -1,4 +1,7 @@
-const APP_ID = process.env.NEXT_PUBLIC_APP_ID!;
+import type { PrismaClient, NotificationType } from "@/generated/prisma";
+
+const APP_ID = process.env.WORLD_APP_ID ?? process.env.NEXT_PUBLIC_APP_ID!;
+const API_KEY = process.env.WORLD_API_KEY;
 
 interface SendNotificationParams {
   walletAddresses: string[];
@@ -13,13 +16,22 @@ export async function sendPushNotification({
   message,
   miniAppPath,
 }: SendNotificationParams) {
+  if (!API_KEY) {
+    console.warn("WORLD_API_KEY not set — push notifications disabled");
+    return false;
+  }
+
   try {
     const response = await fetch(
-      `https://developer.worldcoin.org/api/v2/minikit/${APP_ID}/send-notification`,
+      "https://developer.worldcoin.org/api/v2/minikit/send-notification",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${API_KEY}`,
+        },
         body: JSON.stringify({
+          app_id: APP_ID,
           wallet_addresses: walletAddresses,
           title,
           message,
@@ -36,9 +48,9 @@ export async function sendPushNotification({
 
 // Helper to create and push a notification to a user
 export async function notifyUser(
-  prisma: any,
+  prisma: PrismaClient,
   userId: number,
-  type: string,
+  type: NotificationType,
   title: string,
   body: string,
   poolId?: string,
