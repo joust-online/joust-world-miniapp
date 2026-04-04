@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { formatAmount } from "@/lib/utils";
-import { COLLATERAL_TOKENS } from "@/lib/contracts";
+import { getCollateralInfo } from "@/lib/contracts";
 import { formatDistanceToNow } from "date-fns";
 
 interface PoolCardProps {
@@ -17,13 +17,6 @@ interface PoolCardProps {
     creator: { username: string; worldIdLevel?: string };
     _count: { jousts: number };
   };
-}
-
-function getCollateralInfo(address: string) {
-  const normalized = address.toLowerCase();
-  return Object.values(COLLATERAL_TOKENS).find(
-    (t) => t.address.toLowerCase() === normalized
-  ) ?? { symbol: "???", decimals: 18 };
 }
 
 function stateLabel(state: string) {

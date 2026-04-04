@@ -7,19 +7,12 @@ import { useSession } from "@/hooks/use-profile";
 import { useTransaction } from "@/hooks/use-transaction";
 import { WorldIdGate } from "@/components/world-id-gate";
 import { formatAmount, shortenAddress } from "@/lib/utils";
-import { COLLATERAL_TOKENS, ETH_ADDRESS } from "@/lib/contracts";
+import { getCollateralInfo, ETH_ADDRESS } from "@/lib/contracts";
 import { sharePool, shareContacts, closeMiniApp, sendHaptic, sendTransaction, sendERC20Transaction } from "@/lib/minikit";
 import { HonorVote } from "@/components/honor-vote";
 import { formatDistanceToNow } from "date-fns";
 import { parseUnits } from "viem";
 import { useQueryClient } from "@tanstack/react-query";
-
-function getCollateralInfo(address: string) {
-  const normalized = address.toLowerCase();
-  return Object.values(COLLATERAL_TOKENS).find(
-    (t) => t.address.toLowerCase() === normalized
-  ) ?? { symbol: "???", decimals: 18, address: normalized };
-}
 
 /* ── Pool lifecycle stages ── */
 const LIFECYCLE_STAGES = ["PENDING", "ACTIVE", "CLOSED", "SETTLED"] as const;
