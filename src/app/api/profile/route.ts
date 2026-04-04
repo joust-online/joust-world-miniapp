@@ -5,7 +5,7 @@ import { getSession, requireSession } from "@/lib/session";
 
 const updateProfileSchema = z.object({
   username: z.string().min(1).max(50).optional(),
-  pfp: z.string().max(200000).optional(), // data URL or regular URL
+  pfp: z.string().max(500).optional(), // filepath in R2 bucket
 });
 
 export async function GET() {
