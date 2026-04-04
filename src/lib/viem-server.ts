@@ -3,5 +3,5 @@ import { worldchain } from "viem/chains";
 
 export const publicClient = createPublicClient({
   chain: worldchain,
-  transport: http(),
+  transport: http(process.env.WORLD_CHAIN_RPC),
 });
