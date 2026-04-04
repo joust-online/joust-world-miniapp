@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { TabNavigation } from "@/components/tab-navigation";
 import { WorldIdGate } from "@/components/world-id-gate";
 import { useCreatePool } from "@/hooks/use-pool";
 import { useSession } from "@/hooks/use-profile";
+import { useEthPrice } from "@/hooks/use-eth-price";
 import { COLLATERAL_TOKENS, JOUST_ARENA_ADDRESS } from "@/lib/contracts";
 import { joustArenaAbi } from "@/lib/abi";
 import { sendHaptic, createPoolOnChain } from "@/lib/minikit";
@@ -25,14 +26,7 @@ function CreatePoolForm() {
   const [step, setStep] = useState<"form" | "deploying" | "recording" | "done">("form");
   const [poolId, setPoolId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [ethPrice, setEthPrice] = useState<number | null>(null);
-
-  useEffect(() => {
-    fetch("https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd")
-      .then((r) => r.json())
-      .then((d) => setEthPrice(d.ethereum?.usd ?? null))
-      .catch(() => {});
-  }, []);
+  const ethPrice = useEthPrice();
 
   const [options, setOptions] = useState([
     { label: "Yes", joustType: 1, orderIndex: 0 },
@@ -168,14 +162,14 @@ function CreatePoolForm() {
   };
 
   const isSubmitting = createPool.isPending || step === "deploying" || step === "recording";
-  const buttonLabel =
-    step === "deploying"
-      ? "Deploying on-chain..."
-      : step === "recording"
-      ? "Recording transaction..."
-      : createPool.isPending
-      ? "Creating..."
-      : "Create Pool";
+
+  function getButtonLabel(): string {
+    if (step === "deploying") return "Deploying on-chain...";
+    if (step === "recording") return "Recording transaction...";
+    if (createPool.isPending) return "Creating...";
+    return "Create Pool";
+  }
+  const buttonLabel = getButtonLabel();
 
   const addOption = () => {
     const nextType = options.length + 1;

@@ -2,11 +2,8 @@
 
 import { useState } from "react";
 import { useSession } from "@/hooks/use-profile";
-import { IDKit, orbLegacy } from "@worldcoin/idkit-core";
+import { runWorldIdVerification } from "@/lib/world-id-verify";
 import { useQueryClient } from "@tanstack/react-query";
-
-const APP_ID = process.env.NEXT_PUBLIC_APP_ID!;
-const RP_ID = process.env.NEXT_PUBLIC_RP_ID!;
 
 interface WorldIdGateProps {
   level: "device" | "orb";
@@ -40,45 +37,8 @@ export function WorldIdGate({ level, action = "verify-identity", children, fallb
     setVerifying(true);
     setError(null);
     try {
-      const rpSig = await fetch("/api/worldid/rp-context", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
-      }).then((r) => r.json());
-
-      const request = await IDKit.request({
-        app_id: APP_ID as `app_${string}`,
-        action,
-        rp_context: {
-          rp_id: RP_ID,
-          nonce: rpSig.nonce,
-          created_at: rpSig.created_at,
-          expires_at: rpSig.expires_at,
-          signature: rpSig.sig,
-        },
-        allow_legacy_proofs: true,
-        environment: "production",
-      }).preset(orbLegacy());
-
-      const completion = await request.pollUntilCompletion({ timeout: 120000 });
-      if (!completion.success) {
-        throw new Error("Verification timed out or was cancelled");
-      }
-
-      const res = await fetch("/api/worldid/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          idkitResponse: completion.result,
-          action,
-        }),
-      });
-      if (res.ok) {
-        queryClient.invalidateQueries({ queryKey: ["session"] });
-      } else {
-        const err = await res.json();
-        throw new Error(err.error ?? "Verification failed");
-      }
+      await runWorldIdVerification(action);
+      queryClient.invalidateQueries({ queryKey: ["session"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Verification failed");
     } finally {

@@ -23,7 +23,7 @@ export async function sendPushNotification({
           wallet_addresses: walletAddresses,
           title,
           message,
-          ...(miniAppPath ? { mini_app_path: miniAppPath } : {}),
+          mini_app_path: miniAppPath,
         }),
       }
     );

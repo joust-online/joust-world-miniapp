@@ -1,8 +1,8 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+export function cn(...inputs: ClassValue[]): string {
+  return twMerge(clsx(inputs));
 }
 
 export function shortenAddress(address: string, chars = 4): string {
@@ -15,7 +15,6 @@ export function formatAmount(amount: bigint, decimals: number): string {
   const integerPart = amount / divisor;
   const fractionalPart = amount % divisor;
   const fractionalStr = fractionalPart.toString().padStart(decimals, "0");
-  // Show enough digits to represent the value (at least 4, but more if needed)
   const firstNonZero = fractionalStr.search(/[1-9]/);
   const significantDigits = firstNonZero === -1 ? 0 : Math.max(4, firstNonZero + 2);
   const trimmed = fractionalStr.slice(0, significantDigits);

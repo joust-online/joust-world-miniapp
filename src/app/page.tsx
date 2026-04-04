@@ -51,10 +51,14 @@ export default function HomePage() {
                 (o: any) => o.joustType === joust.joustType
               );
               const isSettled = pool?.state === "SETTLED";
-              const isWin =
-                isSettled && pool?.winningJoustType === joust.joustType;
-              const isLoss =
-                isSettled && pool?.winningJoustType !== joust.joustType;
+              const isWin = isSettled && pool?.winningJoustType === joust.joustType;
+
+              function getJoustStatus(): { text: string; color: string } {
+                if (!isSettled) return { text: "Pending", color: "text-yellow-400" };
+                if (isWin) return { text: "Won", color: "text-green-400" };
+                return { text: "Lost", color: "text-red-400" };
+              }
+              const status = getJoustStatus();
 
               return (
                 <Link
@@ -67,21 +71,9 @@ export default function HomePage() {
                       <span className="text-sm font-medium truncate flex-1 mr-2">
                         {pool?.title ?? "Unknown pool"}
                       </span>
-                      {isWin && (
-                        <span className="text-xs font-medium text-green-400">
-                          Won
-                        </span>
-                      )}
-                      {isLoss && (
-                        <span className="text-xs font-medium text-red-400">
-                          Lost
-                        </span>
-                      )}
-                      {!isSettled && (
-                        <span className="text-xs font-medium text-yellow-400">
-                          Pending
-                        </span>
-                      )}
+                      <span className={`text-xs font-medium ${status.color}`}>
+                        {status.text}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <span className="bg-muted rounded-full px-2 py-0.5">
