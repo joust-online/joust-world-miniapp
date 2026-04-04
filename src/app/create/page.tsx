@@ -18,7 +18,7 @@ function CreatePoolForm() {
   const createPool = useCreatePool();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [collateral, setCollateral] = useState("ETH");
+  const [collateral, setCollateral] = useState("WETH");
   const [minAmount, setMinAmount] = useState("0.001");
   const [arbiterFee, setArbiterFee] = useState("100");
   const [endDate, setEndDate] = useState("");
