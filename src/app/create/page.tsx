@@ -14,6 +14,17 @@ import { createPublicClient, http, decodeEventLog } from "viem";
 import { worldchain } from "viem/chains";
 import { AiArbiterPicker } from "@/components/ai-arbiter-picker";
 import { useAutoAccept } from "@/hooks/use-ai-arbiter";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 function CreatePoolForm() {
   const router = useRouter();
@@ -91,7 +102,7 @@ function CreatePoolForm() {
       for (let i = 0; i < 30; i++) {
         await new Promise((r) => setTimeout(r, 2000));
         const statusRes = await fetch(
-          `https://developer.world.org/api/v2/minikit/userop/${userOpHash}`
+          `https://developer.world.org/api/v2/minikit/userop/${userOpHash}`,
         );
         if (statusRes.ok) {
           const status = await statusRes.json();
@@ -123,12 +134,17 @@ function CreatePoolForm() {
               data: log.data,
               topics: log.topics,
             });
-            if (decoded.eventName === "PoolCreated" || decoded.eventName === "PoolCreationPending") {
+            if (
+              decoded.eventName === "PoolCreated" ||
+              decoded.eventName === "PoolCreationPending"
+            ) {
               contractId = Number((decoded.args as any).id);
               found = true;
               break;
             }
-          } catch {}
+          } catch {
+            // Non-target log, skip
+          }
         }
         if (!found) {
           const counter = await client.readContract({
@@ -202,165 +218,166 @@ function CreatePoolForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="text-sm text-muted-foreground block mb-1">Title</label>
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Will ETH hit $5k by July?"
-          required
-          className="w-full bg-muted rounded-lg px-3 py-2.5 text-sm border border-border focus:border-accent outline-none"
-        />
-      </div>
-
-      <div>
-        <label className="text-sm text-muted-foreground block mb-1">Description (optional)</label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={2}
-          className="w-full bg-muted rounded-lg px-3 py-2.5 text-sm border border-border focus:border-accent outline-none resize-none"
-        />
-      </div>
-
-      <div>
-        <label className="text-sm text-muted-foreground block mb-1">Options</label>
-        <div className="space-y-2">
-          {options.map((opt, i) => (
-            <input
-              key={i}
-              value={opt.label}
-              onChange={(e) => {
-                const next = [...options];
-                next[i] = { ...next[i], label: e.target.value };
-                setOptions(next);
-              }}
-              placeholder={`Option ${i + 1}`}
+    <Card className="rounded-xl py-0 shadow-none">
+      <CardContent className="p-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-muted-foreground mb-1 block text-sm">Title</label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Will ETH hit $5k by July?"
               required
-              className="w-full bg-muted rounded-lg px-3 py-2.5 text-sm border border-border focus:border-accent outline-none"
             />
-          ))}
-          {options.length < 6 && (
-            <button type="button" onClick={addOption} className="text-xs text-accent">
-              + Add option
-            </button>
+          </div>
+
+          <div>
+            <label className="text-muted-foreground mb-1 block text-sm">
+              Description (optional)
+            </label>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+            />
+          </div>
+
+          <div>
+            <label className="text-muted-foreground mb-1 block text-sm">Options</label>
+            <div className="space-y-2">
+              {options.map((opt, i) => (
+                <Input
+                  key={i}
+                  value={opt.label}
+                  onChange={(e) => {
+                    const next = [...options];
+                    next[i] = { ...next[i], label: e.target.value };
+                    setOptions(next);
+                  }}
+                  placeholder={`Option ${i + 1}`}
+                  required
+                />
+              ))}
+              {options.length < 6 && (
+                <Button
+                  type="button"
+                  variant="link"
+                  onClick={addOption}
+                  className="h-auto p-0 text-xs"
+                >
+                  + Add option
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Arbiter Selection */}
+          <div>
+            <label className="text-muted-foreground mb-1 block text-sm">Arbiter</label>
+            <div className="mb-2 flex gap-2">
+              <Button
+                type="button"
+                variant={arbiterMode === "self" ? "default" : "secondary"}
+                onClick={() => {
+                  setArbiterMode("self");
+                  setSelectedAiArbiter(null);
+                }}
+                className="flex-1"
+              >
+                Self Arbiter
+              </Button>
+              <Button
+                type="button"
+                variant={arbiterMode === "ai" ? "default" : "secondary"}
+                onClick={() => setArbiterMode("ai")}
+                className="flex-1 bg-violet-600 hover:bg-violet-700"
+              >
+                AI Arbiter
+              </Button>
+            </div>
+            {arbiterMode === "ai" && (
+              <AiArbiterPicker
+                selected={selectedAiArbiter}
+                onSelect={setSelectedAiArbiter}
+              />
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-muted-foreground mb-1 block text-sm">Collateral</label>
+              <Select value={collateral} onValueChange={setCollateral}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(COLLATERAL_TOKENS).map(([key, t]) => (
+                    <SelectItem key={key} value={key}>
+                      {t.symbol}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-muted-foreground mb-1 block text-sm">Min Stake</label>
+              <Input
+                type="number"
+                step="any"
+                value={minAmount}
+                onChange={(e) => setMinAmount(e.target.value)}
+                required
+              />
+              {ethPrice && parseFloat(minAmount) > 0 && (
+                <p className="text-muted-foreground mt-1 text-xs">
+                  ≈ ${(parseFloat(minAmount) * ethPrice).toFixed(2)} USD
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-muted-foreground mb-1 block text-sm">Arbiter Fee (bps)</label>
+              <Input
+                type="number"
+                value={arbiterFee}
+                onChange={(e) => setArbiterFee(e.target.value)}
+                min="0"
+                max="200"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-muted-foreground mb-1 block text-sm">End Date</label>
+              <Input
+                type="datetime-local"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
+              {error}
+            </div>
           )}
-        </div>
-      </div>
 
-      {/* Arbiter Selection */}
-      <div>
-        <label className="text-sm text-muted-foreground block mb-1">Arbiter</label>
-        <div className="flex gap-2 mb-2">
-          <button
-            type="button"
-            onClick={() => { setArbiterMode("self"); setSelectedAiArbiter(null); }}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-              arbiterMode === "self"
-                ? "bg-accent text-white"
-                : "bg-muted text-muted-foreground"
-            }`}
-          >
-            Self Arbiter
-          </button>
-          <button
-            type="button"
-            onClick={() => setArbiterMode("ai")}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-              arbiterMode === "ai"
-                ? "bg-violet-600 text-white"
-                : "bg-muted text-muted-foreground"
-            }`}
-          >
-            🤖 AI Arbiter
-          </button>
-        </div>
-        {arbiterMode === "ai" && (
-          <AiArbiterPicker
-            selected={selectedAiArbiter}
-            onSelect={setSelectedAiArbiter}
-          />
-        )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="text-sm text-muted-foreground block mb-1">Collateral</label>
-          <select
-            value={collateral}
-            onChange={(e) => setCollateral(e.target.value)}
-            className="w-full bg-muted rounded-lg px-3 py-2.5 text-sm border border-border outline-none"
-          >
-            {Object.entries(COLLATERAL_TOKENS).map(([key, t]) => (
-              <option key={key} value={key}>{t.symbol}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="text-sm text-muted-foreground block mb-1">Min Stake</label>
-          <input
-            type="number"
-            step="any"
-            value={minAmount}
-            onChange={(e) => setMinAmount(e.target.value)}
-            required
-            className="w-full bg-muted rounded-lg px-3 py-2.5 text-sm border border-border focus:border-accent outline-none"
-          />
-          {ethPrice && parseFloat(minAmount) > 0 && (
-            <p className="text-xs text-muted-foreground mt-1">
-              ≈ ${(parseFloat(minAmount) * ethPrice).toFixed(2)} USD
-            </p>
-          )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="text-sm text-muted-foreground block mb-1">Arbiter Fee (bps)</label>
-          <input
-            type="number"
-            value={arbiterFee}
-            onChange={(e) => setArbiterFee(e.target.value)}
-            min="0"
-            max="200"
-            required
-            className="w-full bg-muted rounded-lg px-3 py-2.5 text-sm border border-border focus:border-accent outline-none"
-          />
-        </div>
-        <div>
-          <label className="text-sm text-muted-foreground block mb-1">End Date</label>
-          <input
-            type="datetime-local"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            required
-            className="w-full bg-muted rounded-lg px-3 py-2.5 text-sm border border-border focus:border-accent outline-none"
-          />
-        </div>
-      </div>
-
-      {error && (
-        <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-3 py-2">
-          {error}
-        </div>
-      )}
-
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full py-3 bg-accent text-white rounded-xl font-semibold disabled:opacity-50"
-      >
-        {buttonLabel}
-      </button>
-    </form>
+          <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
+            {buttonLabel}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
 
 export default function CreatePage() {
   return (
-    <main className="pb-20 px-4 pt-4">
-      <h1 className="text-xl font-bold mb-4">Create Pool</h1>
+    <main className="px-4 pt-4 pb-20">
+      <h1 className="mb-4 text-xl font-bold">Create Pool</h1>
       <CreatePoolForm />
       <TabNavigation />
     </main>

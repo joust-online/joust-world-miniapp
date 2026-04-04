@@ -136,6 +136,6 @@ function parseAIResponse(
 
     return { winningJoustType, reasoning };
   } catch (err) {
-    throw new Error(`Failed to parse AI response: ${content}`);
+    throw new Error(`Failed to parse AI response: ${content}`, { cause: err });
   }
 }

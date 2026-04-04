@@ -19,11 +19,7 @@ const PERMIT2_APPROVE_ABI = [
   },
 ] as const;
 
-export async function sendTransaction(
-  functionName: string,
-  args: unknown[],
-  value?: bigint,
-) {
+export async function sendTransaction(functionName: string, args: unknown[], value?: bigint) {
   if (!MiniKit.isInstalled()) {
     throw new Error("MiniKit not available. Open this app in World App.");
   }
@@ -110,13 +106,19 @@ export async function sendERC20Transaction(
   return result.data;
 }
 
-export async function sharePool(poolId: string, poolTitle: string, won?: boolean, closeAfter?: boolean) {
+export async function sharePool(
+  poolId: string,
+  poolTitle: string,
+  won?: boolean,
+  closeAfter?: boolean,
+) {
   const appId = process.env.NEXT_PUBLIC_APP_ID;
   await MiniKit.share({
     title: `Joust: ${poolTitle}`,
-    text: won !== undefined
-      ? `${won ? "I won!" : "I participated in"} "${poolTitle}" on Joust!`
-      : `Check out "${poolTitle}" on Joust!`,
+    text:
+      won !== undefined
+        ? `${won ? "I won!" : "I participated in"} "${poolTitle}" on Joust!`
+        : `Check out "${poolTitle}" on Joust!`,
     url: `https://world.org/mini-app?app_id=${appId}&path=/pool/${poolId}`,
   });
   if (closeAfter) {

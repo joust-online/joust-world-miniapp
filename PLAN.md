@@ -15,6 +15,7 @@ We're porting the Joust prediction market protocol from Abstract Chain (ZKSync) 
 ## Phase 0: Smart Contract Port to World Chain (~2 hours)
 
 ### What changes
+
 The Solidity code in `JoustArena.sol` is **pure standard EVM** — zero ZKSync-specific code. The ZKSync dependency is entirely in toolchain config (`foundry.toml` lines 18-19, `Makefile` `--zksync` flags). This is the easiest possible port.
 
 ### Steps
@@ -42,11 +43,13 @@ The Solidity code in `JoustArena.sol` is **pure standard EVM** — zero ZKSync-s
    - Chain ID checks: `block.chainid == 480`
 
 5. **Build & test**
+
    ```bash
    cd contracts && forge soldeer update && forge build && forge test -vv
    ```
 
 6. **Deploy to World Chain mainnet** (chain 480) — testnet is NOT supported for mini app testing per World docs
+
    ```bash
    forge script script/DeployJoustArena.s.sol --rpc-url $WORLD_CHAIN_RPC --chain 480 --broadcast
    ```
@@ -56,9 +59,11 @@ The Solidity code in `JoustArena.sol` is **pure standard EVM** — zero ZKSync-s
 8. **Whitelist contracts in World Developer Portal** — required for MiniKit.sendTransaction to work. Register the proxy address under Mini App > Permissions.
 
 ### Key decision: Keep UUPS proxy
+
 Already working code. Allows mid-hackathon bug fixes. Risk of switching to immutable > risk of keeping proxy.
 
 ### Key decision: No on-chain World ID
+
 Verify at API layer, not in contract. Same UX, much simpler, standard pattern. Would require contract modifications + World ID verifier interface to do on-chain.
 
 ---
@@ -68,12 +73,15 @@ Verify at API layer, not in contract. Same UX, much simpler, standard pattern. W
 ### Steps
 
 1. **Scaffold with World template**
+
    ```bash
    npx @worldcoin/create-mini-app@latest
    ```
+
    This gives us Next.js + MiniKit + SIWE auth pre-configured.
 
 2. **Install additional dependencies**
+
    ```bash
    pnpm add wagmi viem @tanstack/react-query @prisma/client zod iron-session
    pnpm add @worldcoin/idkit
@@ -83,12 +91,14 @@ Verify at API layer, not in contract. Same UX, much simpler, standard pattern. W
    ```
 
 3. **Provider stack** — replace RainbowKit pattern from `joust-app/src/contexts/wallet-provider.tsx`
+
    ```
    MiniKitProvider          (from @worldcoin/minikit-react)
      > QueryClientProvider   (TanStack)
        > WagmiProvider       (reads only, no connectors — World Chain transport)
          > {children}
    ```
+
    No RainbowKit, no Unlink, no wallet connectors — MiniKit handles wallet.
 
 4. **Wagmi config** — based on `joust-app/src/lib/wagmi-config.ts`
@@ -126,6 +136,7 @@ Verify at API layer, not in contract. Same UX, much simpler, standard pattern. W
 Strip the existing schema at `joust-app/prisma/schema.prisma` (836 lines) down to essentials. Remove all Unlink/commitment models, beta invite system, complex event sourcing.
 
 **Keep (simplified):**
+
 ```
 User            — id, username, address, pfp, worldIdVerified, worldIdLevel, totalPoints
 Pool            — id, contractId, title, description, creator, arbiter, fees, collateral, state, times
@@ -138,6 +149,7 @@ WorldIdVerification — id, userId, action, nullifierHash, verificationLevel
 ```
 
 **Remove entirely:**
+
 - `Commitment`, `CommitmentRecovery` (Unlink-specific)
 - `BetaTesterInvite`, `Admin` (not needed)
 - `Event`, `PoolCreatedEvent`, `PoolClosedEvent`, `NewJoustEvent`, `PoolSettledEvent`, `PoolRefundedEvent` (complex event sourcing — overkill for hackathon)
@@ -148,6 +160,7 @@ WorldIdVerification — id, userId, action, nullifierHash, verificationLevel
 - `Invite` (replace with MiniKit shareContacts)
 
 **New model:**
+
 ```prisma
 model WorldIdVerification {
   id                Int      @id @default(autoincrement())
@@ -163,6 +176,7 @@ model WorldIdVerification {
 ```
 
 ### Deploy DB
+
 - Fresh Neon Postgres instance (separate from joust-app's existing Neon)
 - Create new project at neon.tech, get DATABASE_URL + DATABASE_URL_UNPOOLED
 - `npx prisma migrate dev`
@@ -175,13 +189,13 @@ This is the highest-value prize. World ID must be a **real constraint that the a
 
 ### World ID as Tiered Access Control
 
-| Action | No Verification | Device Verified | Orb Verified |
-|---|---|---|---|
-| View pools | Yes | Yes | Yes |
-| Joust (bet) | No | Max 1 USDC per joust | Unlimited |
-| Create pools | No | No | Yes |
-| Be an arbiter | No | No | Yes |
-| Vote on arbiter honor | No | No | Yes (1 person = 1 vote) |
+| Action                | No Verification | Device Verified      | Orb Verified            |
+| --------------------- | --------------- | -------------------- | ----------------------- |
+| View pools            | Yes             | Yes                  | Yes                     |
+| Joust (bet)           | No              | Max 1 USDC per joust | Unlimited               |
+| Create pools          | No              | No                   | Yes                     |
+| Be an arbiter         | No              | No                   | Yes                     |
+| Vote on arbiter honor | No              | No                   | Yes (1 person = 1 vote) |
 
 **Why this wins:** The app literally doesn't work without World ID. You can't create pools, can't be an arbiter, can barely bet. World ID IS the app's access control layer. Orb verification unlocks the full experience. This directly satisfies "products that break without proof of human."
 
@@ -194,11 +208,13 @@ This is the highest-value prize. World ID must be a **real constraint that the a
 ### Implementation
 
 **`src/lib/world-id.ts`** — Server-side helpers
+
 - `verifyWorldIdProof(proof, action, signal)` — calls `POST https://developer.world.org/api/v4/verify/{rp_id}`
 - `requireWorldId(session, level)` — middleware helper, checks user's verification level
 - `generateRpSignature()` — signs requests with `signing_key` (never on client)
 
 **`src/app/api/verify/route.ts`** — Verification endpoint
+
 1. Receive proof from frontend (MiniKit.verify() or IDKit)
 2. Verify proof server-side via World API
 3. Check nullifier not already used for this action
@@ -206,12 +222,14 @@ This is the highest-value prize. World ID must be a **real constraint that the a
 5. Update `user.worldIdVerified` and `user.worldIdLevel`
 
 **`src/components/world-id-gate.tsx`** — Client component
+
 - Wraps actions that require verification
 - Shows verification prompt with appropriate level
 - Calls `MiniKit.verify()` for in-app verification (inside World App)
 - Falls back to IDKit widget for external access
 
 **Enforce in API routes:**
+
 - `POST /api/pool` — `requireWorldId(session, 'orb')`
 - `POST /api/pool/[id]/accept-arbiter` — `requireWorldId(session, 'orb')`
 - `POST /api/joust` — `requireWorldId(session, 'device')` + amount limit check if not orb
@@ -220,6 +238,7 @@ This is the highest-value prize. World ID must be a **real constraint that the a
 ### Reputation tied to unique humans
 
 The Honor system from the existing app becomes **Sybil-resistant**:
+
 - Only Orb-verified humans can vote on arbiters
 - Each human gets exactly ONE vote per pool per arbiter (enforced by World ID nullifier)
 - Arbiter reputation is tied to verified humans, not wallets
@@ -259,6 +278,7 @@ Design: Use `@worldcoin/mini-apps-ui-kit-react` for native World App feel. Suppl
 3. **`MiniKit.verify()`** — World ID verification (Phase 3)
 
 4. **`MiniKit.shareContacts()`** — Invite friends to a pool
+
    ```ts
    const { data } = await MiniKit.shareContacts({
      isMultiSelectEnabled: true,
@@ -268,10 +288,11 @@ Design: Use `@worldcoin/mini-apps-ui-kit-react` for native World App feel. Suppl
    ```
 
 5. **`MiniKit.share()`** — Share pool results after settlement
+
    ```ts
    await MiniKit.share({
      title: `Joust: ${poolTitle}`,
-     text: `${winningOption} won! I ${won ? 'won' : 'participated'}.`,
+     text: `${winningOption} won! I ${won ? "won" : "participated"}.`,
      url: `https://world.org/mini-app?app_id=${APP_ID}&path=/pool/${poolId}`,
    });
    ```
@@ -290,18 +311,18 @@ Design: Use `@worldcoin/mini-apps-ui-kit-react` for native World App feel. Suppl
 
 ### API Routes (simplified from joust-app's ~30 routes)
 
-| Route | Method | Purpose | World ID |
-|---|---|---|---|
-| `/api/auth` | POST | SIWE walletAuth login | None |
-| `/api/verify` | POST | World ID proof verification | N/A |
-| `/api/pool` | GET, POST | List/create pools | Orb for POST |
-| `/api/pool/[id]` | GET | Pool detail | None |
-| `/api/pool/[id]/record-tx` | POST | Record on-chain action (settle/refund/close/accept) | Varies |
-| `/api/joust` | GET, POST | List/create jousts | Device+ for POST |
-| `/api/profile` | GET, PATCH | User profile | None |
-| `/api/honor` | GET, POST | Honor votes | Orb for POST |
-| `/api/leaderboard` | GET | Rankings | None |
-| `/api/notification` | GET, PATCH | Notifications | None |
+| Route                      | Method     | Purpose                                             | World ID         |
+| -------------------------- | ---------- | --------------------------------------------------- | ---------------- |
+| `/api/auth`                | POST       | SIWE walletAuth login                               | None             |
+| `/api/verify`              | POST       | World ID proof verification                         | N/A              |
+| `/api/pool`                | GET, POST  | List/create pools                                   | Orb for POST     |
+| `/api/pool/[id]`           | GET        | Pool detail                                         | None             |
+| `/api/pool/[id]/record-tx` | POST       | Record on-chain action (settle/refund/close/accept) | Varies           |
+| `/api/joust`               | GET, POST  | List/create jousts                                  | Device+ for POST |
+| `/api/profile`             | GET, PATCH | User profile                                        | None             |
+| `/api/honor`               | GET, POST  | Honor votes                                         | Orb for POST     |
+| `/api/leaderboard`         | GET        | Rankings                                            | None             |
+| `/api/notification`        | GET, PATCH | Notifications                                       | None             |
 
 ### Transaction flow pattern
 
@@ -327,13 +348,16 @@ Frontend                          MiniKit/World App                 Backend API
 ## Phase 5: AgentKit AI Arbiters (NICE-TO-HAVE, if time permits)
 
 ### Concept
+
 An AI agent registered in World's AgentBook becomes an arbiter. It:
+
 - Is linked to a real human via World ID (through AgentBook registration)
 - Can automatically settle pools based on external data
 - Gets a special "AI Arbiter" badge in the UI
 - Has its own honor score
 
 ### Implementation sketch
+
 1. `npm install @worldcoin/agentkit`
 2. Register agent wallet in AgentBook: `npx @worldcoin/agentkit-cli register <agent-address>`
 3. Create a simple agent service that:
@@ -408,34 +432,34 @@ joust-world-miniapp/
 
 ## Key Technical Decisions
 
-| Decision | Choice | Why |
-|---|---|---|
-| Contract changes | None (Solidity unchanged) | ZKSync specifics are toolchain-only |
-| Proxy pattern | Keep UUPS | Already works, allows mid-hackathon fixes |
-| On-chain World ID | No — API layer only | Much simpler, same UX, standard pattern |
-| Wallet connection | MiniKit walletAuth (SIWE) | No RainbowKit needed inside World App |
-| Transactions | MiniKit.sendTransaction | Required for mini apps on World Chain |
-| Contract reads | wagmi useReadContract | Standard, works without MiniKit |
-| Privacy/Unlink | Remove entirely | Not needed, adds complexity |
-| Background jobs | Remove Inngest | Synchronous recording, hackathon simplicity |
-| Event sourcing | Remove | Direct DB updates, no Event/FundMovement tables |
-| Collateral | ETH + USDC only | Simplest, both native to World Chain |
-| Chain | World Chain mainnet only (480) | Testnet not supported for mini app testing |
+| Decision          | Choice                         | Why                                             |
+| ----------------- | ------------------------------ | ----------------------------------------------- |
+| Contract changes  | None (Solidity unchanged)      | ZKSync specifics are toolchain-only             |
+| Proxy pattern     | Keep UUPS                      | Already works, allows mid-hackathon fixes       |
+| On-chain World ID | No — API layer only            | Much simpler, same UX, standard pattern         |
+| Wallet connection | MiniKit walletAuth (SIWE)      | No RainbowKit needed inside World App           |
+| Transactions      | MiniKit.sendTransaction        | Required for mini apps on World Chain           |
+| Contract reads    | wagmi useReadContract          | Standard, works without MiniKit                 |
+| Privacy/Unlink    | Remove entirely                | Not needed, adds complexity                     |
+| Background jobs   | Remove Inngest                 | Synchronous recording, hackathon simplicity     |
+| Event sourcing    | Remove                         | Direct DB updates, no Event/FundMovement tables |
+| Collateral        | ETH + USDC only                | Simplest, both native to World Chain            |
+| Chain             | World Chain mainnet only (480) | Testnet not supported for mini app testing      |
 
 ---
 
 ## Reusable Code from Existing App
 
-| What | Source | Adaptation |
-|---|---|---|
-| shadcn/ui components | `joust-app/src/components/ui/` | Copy button, card, dialog, drawer, tabs, select, input |
-| Zod validation patterns | `joust-app/src/app/api/*/route.ts` | Reuse schema validation approach |
-| React Query patterns | `joust-app/src/queries/` | Simplify, same pattern |
-| Pool display logic | `joust-app/src/components/pool/` | Adapt for mobile-first |
-| Honor system logic | `joust-app/src/app/api/honor/` | Add World ID 1-person-1-vote |
-| Token utilities | `joust-app/src/lib/token-utils.ts` | Adapt addresses for World Chain |
-| Auth session pattern | `joust-app/src/lib/auth/` | Replace with SIWE verification |
-| Dark theme / colors | `joust-app/src/app/globals.css` | Reuse color scheme |
+| What                    | Source                             | Adaptation                                             |
+| ----------------------- | ---------------------------------- | ------------------------------------------------------ |
+| shadcn/ui components    | `joust-app/src/components/ui/`     | Copy button, card, dialog, drawer, tabs, select, input |
+| Zod validation patterns | `joust-app/src/app/api/*/route.ts` | Reuse schema validation approach                       |
+| React Query patterns    | `joust-app/src/queries/`           | Simplify, same pattern                                 |
+| Pool display logic      | `joust-app/src/components/pool/`   | Adapt for mobile-first                                 |
+| Honor system logic      | `joust-app/src/app/api/honor/`     | Add World ID 1-person-1-vote                           |
+| Token utilities         | `joust-app/src/lib/token-utils.ts` | Adapt addresses for World Chain                        |
+| Auth session pattern    | `joust-app/src/lib/auth/`          | Replace with SIWE verification                         |
+| Dark theme / colors     | `joust-app/src/app/globals.css`    | Reuse color scheme                                     |
 
 ---
 

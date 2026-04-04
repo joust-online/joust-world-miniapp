@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSession } from "@/hooks/use-profile";
 import { runWorldIdVerification } from "@/lib/world-id-verify";
 import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
 
 interface WorldIdGateProps {
   level: "device" | "orb";
@@ -12,24 +13,29 @@ interface WorldIdGateProps {
   fallback?: React.ReactNode;
 }
 
-export function WorldIdGate({ level, action = "verify-identity", children, fallback }: WorldIdGateProps) {
+export function WorldIdGate({
+  level,
+  action = "verify-identity",
+  children,
+  fallback,
+}: WorldIdGateProps) {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!session?.authenticated) {
-    return fallback ?? (
-      <div className="text-center py-8 text-muted-foreground">
-        <p>Sign in to continue</p>
-      </div>
+    return (
+      fallback ?? (
+        <div className="text-muted-foreground py-8 text-center">
+          <p>Sign in to continue</p>
+        </div>
+      )
     );
   }
 
   const user = session.user;
-  const hasRequired = level === "device"
-    ? user.worldIdVerified
-    : user.worldIdLevel === "orb";
+  const hasRequired = level === "device" ? user.worldIdVerified : user.worldIdLevel === "orb";
 
   if (hasRequired) return <>{children}</>;
 
@@ -47,28 +53,24 @@ export function WorldIdGate({ level, action = "verify-identity", children, fallb
   };
 
   return (
-    <div className="text-center py-8">
+    <div className="py-8 text-center">
       <div className="mb-4">
-        <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center text-2xl">
+        <div className="bg-muted mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full text-2xl">
           {level === "orb" ? "🔮" : "📱"}
         </div>
-        <h3 className="font-semibold mb-1">
+        <h3 className="mb-1 font-semibold">
           {level === "orb" ? "Orb Verification Required" : "World ID Required"}
         </h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           {level === "orb"
             ? "This action requires Orb-level World ID verification to ensure one-person-one-vote."
             : "Verify with World ID to access this feature."}
         </p>
       </div>
-      {error && <p className="text-xs text-destructive mb-3">{error}</p>}
-      <button
-        onClick={handleVerify}
-        disabled={verifying}
-        className="px-6 py-2.5 bg-accent text-white rounded-full font-medium text-sm disabled:opacity-50"
-      >
+      {error && <p className="text-destructive mb-3 text-xs">{error}</p>}
+      <Button onClick={handleVerify} disabled={verifying} className="px-6">
         {verifying ? "Verifying..." : `Verify with ${level === "orb" ? "Orb" : "World ID"}`}
-      </button>
+      </Button>
     </div>
   );
 }

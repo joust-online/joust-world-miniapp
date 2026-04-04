@@ -6,6 +6,8 @@ import { getCollateralInfo } from "@/lib/contracts";
 import { VerificationBadge } from "@/components/verification-badge";
 import { AiArbiterBadge } from "@/components/ai-arbiter-badge";
 import { formatDistanceToNow } from "date-fns";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface PoolCardProps {
   pool: {
@@ -37,9 +39,10 @@ function getDisplayState(state: string, endTime: string, joustCount: number) {
 
 export function PoolCard({ pool }: PoolCardProps) {
   const collateral = getCollateralInfo(pool.collateral);
-  const total = typeof pool.totalAmountJousted === "string"
-    ? BigInt(pool.totalAmountJousted)
-    : pool.totalAmountJousted;
+  const total =
+    typeof pool.totalAmountJousted === "string"
+      ? BigInt(pool.totalAmountJousted)
+      : pool.totalAmountJousted;
   const state = getDisplayState(pool.state, pool.endTime, pool._count.jousts);
   const expired = new Date(pool.endTime) < new Date();
   const timeDistance = formatDistanceToNow(new Date(pool.endTime), { addSuffix: true });
@@ -47,29 +50,33 @@ export function PoolCard({ pool }: PoolCardProps) {
 
   return (
     <Link href={`/pool/${pool.id}`} className="block">
-      <div className="bg-card rounded-xl border border-border p-4 hover:border-accent/30 transition-colors">
-        <div className="flex items-start justify-between mb-2">
-          <h3 className="font-semibold text-sm leading-tight flex-1 mr-2">{pool.title}</h3>
-          <span className={`text-xs font-medium ${state.color}`}>{state.text}</span>
-        </div>
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {pool.options.map((opt) => (
-            <span key={opt.joustType} className="text-xs bg-muted rounded-full px-2 py-0.5">
-              {opt.label}
+      <Card className="hover:border-accent/30 rounded-xl py-0 shadow-none transition-colors">
+        <CardContent className="p-4">
+          <div className="mb-2 flex items-start justify-between">
+            <h3 className="mr-2 flex-1 text-sm leading-tight font-semibold">{pool.title}</h3>
+            <span className={`text-xs font-medium ${state.color}`}>{state.text}</span>
+          </div>
+          <div className="mb-3 flex flex-wrap gap-1.5">
+            {pool.options.map((opt) => (
+              <Badge key={opt.joustType} variant="secondary" className="rounded-full text-xs">
+                {opt.label}
+              </Badge>
+            ))}
+          </div>
+          <div className="text-muted-foreground mb-2 flex items-center gap-1.5 text-xs">
+            <span>by {pool.creator.username}</span>
+            <VerificationBadge level={pool.creator.worldIdLevel} />
+            {pool.aiArbiter && <AiArbiterBadge name={pool.aiArbiter.name} size="sm" />}
+          </div>
+          <div className="text-muted-foreground flex items-center justify-between text-xs">
+            <span>
+              {formatAmount(total, collateral.decimals)} {collateral.symbol} pooled
             </span>
-          ))}
-        </div>
-        <div className="flex items-center gap-1.5 mb-2 text-xs text-muted-foreground">
-          <span>by {pool.creator.username}</span>
-          <VerificationBadge level={pool.creator.worldIdLevel} />
-          {pool.aiArbiter && <AiArbiterBadge name={pool.aiArbiter.name} size="sm" />}
-        </div>
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{formatAmount(total, collateral.decimals)} {collateral.symbol} pooled</span>
-          <span>{pool._count.jousts} predictions</span>
-          <span>{timeLabel}</span>
-        </div>
-      </div>
+            <span>{pool._count.jousts} predictions</span>
+            <span>{timeLabel}</span>
+          </div>
+        </CardContent>
+      </Card>
     </Link>
   );
 }

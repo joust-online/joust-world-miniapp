@@ -3,7 +3,7 @@ export type VerificationLevel = "orb" | "device";
 export function requireWorldId(
   worldIdVerified: boolean,
   worldIdLevel: string | null,
-  requiredLevel: VerificationLevel
+  requiredLevel: VerificationLevel,
 ): { allowed: boolean; reason?: string } {
   if (!worldIdVerified) {
     return { allowed: false, reason: "World ID verification required" };

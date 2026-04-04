@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { agentSettlePool, agentClosePool } from "@/lib/agent-wallet";
 import { determineOutcome } from "@/lib/ai-settler";

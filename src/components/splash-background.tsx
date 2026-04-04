@@ -16,12 +16,7 @@ export default function Background() {
               seed="11"
               stitchTiles="stitch"
             />
-            <feColorMatrix
-              in="noise"
-              type="saturate"
-              values="0"
-              result="monoNoise"
-            />
+            <feColorMatrix in="noise" type="saturate" values="0" result="monoNoise" />
             <feComponentTransfer in="monoNoise" result="noise">
               <feFuncA type="discrete" tableValues="0.4" />
             </feComponentTransfer>
@@ -44,12 +39,7 @@ export default function Background() {
               seed="37"
               stitchTiles="stitch"
             />
-            <feColorMatrix
-              in="noise"
-              type="saturate"
-              values="0"
-              result="monoNoise"
-            />
+            <feColorMatrix in="noise" type="saturate" values="0" result="monoNoise" />
             <feComponentTransfer in="monoNoise" result="noise">
               <feFuncA type="discrete" tableValues="0.3" />
             </feComponentTransfer>

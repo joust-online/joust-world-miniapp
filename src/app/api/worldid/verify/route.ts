@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireSession } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 
 const RP_ID = process.env.WORLD_RP_ID!;
 
@@ -14,14 +14,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Forward to World Developer Portal for verification
-    const verifyRes = await fetch(
-      `https://developer.world.org/api/v4/verify/${RP_ID}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(idkitResponse),
-      },
-    );
+    const verifyRes = await fetch(`https://developer.world.org/api/v4/verify/${RP_ID}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(idkitResponse),
+    });
 
     if (!verifyRes.ok) {
       const errBody = await verifyRes.text();

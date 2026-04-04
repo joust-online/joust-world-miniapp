@@ -19,9 +19,7 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <MiniKitProvider>
       <WagmiProvider config={wagmiConfig}>
-        <QueryClientProvider client={queryClient}>
-          {children}
-        </QueryClientProvider>
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
       </WagmiProvider>
     </MiniKitProvider>
   );

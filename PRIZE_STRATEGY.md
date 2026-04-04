@@ -3,9 +3,11 @@
 ## Target Prizes
 
 ### 1. Best World ID 4.0 — $8,000
+
 **Criteria:** "Products that break without proof of human. Uses World ID 4.0 as a real constraint (eligibility, uniqueness, fairness, reputation, rate limits). Proof validation must occur in a web backend or smart contract."
 
 ### 2. Best MiniKit 2.0 — $4,000
+
 **Criteria:** "Mini apps that make World ID and World App work smoothly. Build a Mini App with MiniKit 2.0, integrate MiniKit SDK commands, deploy contracts to World Chain. **Project must NOT be gambling or chance based.** Proof validation required in web backend or smart contract."
 
 ---
@@ -14,31 +16,31 @@
 
 ### World ID 4.0 ✅ (strong but has gaps)
 
-| Feature | Status | Notes |
-|---|---|---|
-| Managed RP (4.0 feature) | ✅ | Selected managed mode in Developer Portal |
-| Server-side proof validation | ✅ | `verifyCloudProof` in /api/verify |
-| Orb gate on pool creation | ✅ | Only Orb-verified humans can create pools |
-| Orb gate on arbitration | ✅ | Only Orb-verified humans can be arbiters |
-| Orb gate on honor voting | ✅ | 1-person-1-vote via nullifier dedup |
-| Device gate on jousting | ✅ | Device-verified can joust up to 1 USDC |
-| Nullifier dedup | ✅ | WorldIdVerification table tracks nullifiers |
-| Tiered access control | ✅ | None < Device < Orb |
+| Feature                      | Status | Notes                                       |
+| ---------------------------- | ------ | ------------------------------------------- |
+| Managed RP (4.0 feature)     | ✅     | Selected managed mode in Developer Portal   |
+| Server-side proof validation | ✅     | `verifyCloudProof` in /api/verify           |
+| Orb gate on pool creation    | ✅     | Only Orb-verified humans can create pools   |
+| Orb gate on arbitration      | ✅     | Only Orb-verified humans can be arbiters    |
+| Orb gate on honor voting     | ✅     | 1-person-1-vote via nullifier dedup         |
+| Device gate on jousting      | ✅     | Device-verified can joust up to 1 USDC      |
+| Nullifier dedup              | ✅     | WorldIdVerification table tracks nullifiers |
+| Tiered access control        | ✅     | None < Device < Orb                         |
 
 ### MiniKit 2.0 ✅ (good coverage)
 
-| Command | Status | Where Used |
-|---|---|---|
-| `walletAuth` (SIWE) | ✅ | Sign-in flow |
-| `sendTransaction` | ✅ | Pool creation, jousting, settle, refund, close, accept arbiter |
-| `verify` | ✅ | World ID verification prompts |
-| `share` | ✅ | Share pool results |
-| `shareContacts` | ✅ | Invite friends to pools |
-| `sendHapticFeedback` | ✅ | On joust, win, loss, error |
-| Push notifications (API) | ✅ | Settle, refund, new joust, arbiter invite |
-| `requestPermission` | ❌ | **MISSING** — need to request notification permission |
-| `closeMiniApp` | ❌ | **MISSING** — should use after share completion |
-| Permit2 (ERC20) | ✅ | USDC jousting |
+| Command                  | Status | Where Used                                                     |
+| ------------------------ | ------ | -------------------------------------------------------------- |
+| `walletAuth` (SIWE)      | ✅     | Sign-in flow                                                   |
+| `sendTransaction`        | ✅     | Pool creation, jousting, settle, refund, close, accept arbiter |
+| `verify`                 | ✅     | World ID verification prompts                                  |
+| `share`                  | ✅     | Share pool results                                             |
+| `shareContacts`          | ✅     | Invite friends to pools                                        |
+| `sendHapticFeedback`     | ✅     | On joust, win, loss, error                                     |
+| Push notifications (API) | ✅     | Settle, refund, new joust, arbiter invite                      |
+| `requestPermission`      | ❌     | **MISSING** — need to request notification permission          |
+| `closeMiniApp`           | ❌     | **MISSING** — should use after share completion                |
+| Permit2 (ERC20)          | ✅     | USDC jousting                                                  |
 
 ---
 
@@ -49,11 +51,13 @@
 Prediction markets can look like gambling. **We must reframe entirely.**
 
 **Current problematic language in UI:**
+
 - "Joust" could imply combat/gambling
 - "Bet", "wager" — must not appear anywhere
 - "Place Joust" button — needs rewording
 
 **Required changes:**
+
 - Reframe as: "prediction market", "forecast", "conviction staking", "outcome market"
 - Emphasize: arbiter is a HUMAN making a judgment call — not random chance
 - The app is about HUMAN JUDGMENT + REPUTATION, not gambling
@@ -69,14 +73,16 @@ Prediction markets can look like gambling. **We must reframe entirely.**
 ### 🚨 ISSUE 2: App doesn't feel "broken" without World ID
 
 Judges will test by opening the app without verifying. Right now they can:
+
 - See the home page
 - Browse all pools on Discover
 - View pool details
 - See the leaderboard
 
-This makes World ID feel like an *add-on*, not a *constraint*.
+This makes World ID feel like an _add-on_, not a _constraint_.
 
 **Required changes:**
+
 1. **Full-screen World ID verification gate on launch** — Before seeing ANY content, unverified users must verify. Show a compelling screen explaining why World ID matters for fair predictions.
 2. **Blurred/locked pool cards** for unverified users — If we let them browse, blur the details and overlay "Verify with World ID to see predictions"
 3. **Route-level protection** — Make /discover, /create, /profile, /pool/[id] all require at minimum device verification
@@ -91,20 +97,26 @@ This makes World ID feel like an *add-on*, not a *constraint*.
 ## Improvements to Strengthen World ID Story
 
 ### Rate Limiting via World ID (uniqueness + fairness)
+
 Currently we only use nullifiers for honor voting. Add:
+
 - **Max 5 pools per human per day** — Register a "daily-create-pool" action, track nullifiers with daily rotation
 - **Max 20 predictions per human per hour** — Prevents Sybil spam even with device verification
 - These make the app fundamentally depend on World ID for rate limiting, not just gating
 
 ### Reputation Tied to Unique Humans
+
 Strengthen the honor system narrative:
+
 - Show prominent "Verified Human" badges everywhere
 - On pool detail, show "This pool is arbitrated by an Orb-verified human"
 - On the leaderboard, ONLY show Orb-verified arbiters
 - Add a "Trust Score" that weights honor votes by the voter's own reputation
 
 ### Narrative for Judges
+
 The pitch should be: **"Joust is a prediction market that CANNOT work without World ID."**
+
 - Without World ID, anyone could create infinite Sybil accounts to manipulate predictions
 - Without Orb verification, arbiter reputation would be meaningless (one bad actor = infinite downvotes)
 - Without 1-person-1-vote, the honor system collapses

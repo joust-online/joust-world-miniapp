@@ -37,8 +37,8 @@
 
   /* strokes & focus */
   --border: hsl(210 19% 90%); /* #E4E7EB */
-  --border-accent-secondary: #FFE500;
-  --border-destructive: #EE8989;
+  --border-accent-secondary: #ffe500;
+  --border-destructive: #ee8989;
   --input: hsl(210 17% 88%); /* #EAEAEC */
   --ring: hsl(200 100% 45%); /* #0095FF – visible on light */
 
@@ -90,7 +90,7 @@
   --accent: hsl(138 100% 32%); /* #00A519 */
   --accent-secondary: hsl(40 69% 34%); /* #966A18 */
   --accent-foreground: hsl(0 0% 100%);
-  --border-accent-secondary: #FFE500;
+  --border-accent-secondary: #ffe500;
 
   --muted: hsl(210 6% 13%); /* #212124 */
   --muted-foreground: hsl(0 0% 70%); /* #B2B2B2 */
@@ -99,7 +99,7 @@
   --destructive-foreground: hsl(0 0% 100%);
 
   --border: hsl(210 6% 13%); /* #212124 */
-  --border-destructive: #EE8989;
+  --border-destructive: #ee8989;
   --input: hsl(210 10% 18%); /* #293039 */
   --ring: hsl(191 100% 51%); /* #00AFFF */
   /* darker shadow palette */

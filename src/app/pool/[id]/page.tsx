@@ -10,18 +10,33 @@ import { WorldIdGate } from "@/components/world-id-gate";
 import { VerificationBadge } from "@/components/verification-badge";
 import { formatAmount, shortenAddress } from "@/lib/utils";
 import { getCollateralInfo, ETH_ADDRESS } from "@/lib/contracts";
-import { sharePool, shareContacts, closeMiniApp, sendHaptic, sendTransaction, sendERC20Transaction } from "@/lib/minikit";
+import {
+  sharePool,
+  shareContacts,
+  closeMiniApp,
+  sendHaptic,
+  sendTransaction,
+  sendERC20Transaction,
+} from "@/lib/minikit";
 import { HonorVote } from "@/components/honor-vote";
 import { AiArbiterBadge } from "@/components/ai-arbiter-badge";
 import { useRequestSettlement, useAutoAccept } from "@/hooks/use-ai-arbiter";
 import { formatDistanceToNow } from "date-fns";
 import { parseUnits } from "viem";
 import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
-/* ── Pool lifecycle stages ── */
+/* -- Pool lifecycle stages -- */
 const LIFECYCLE_STAGES = ["PENDING_ARBITER", "ACTIVE", "CLOSED", "SETTLED"] as const;
 
-function getPoolStatusDisplay(state: string, expired: boolean, joustCount: number): { text: string; color: string } {
+function getPoolStatusDisplay(
+  state: string,
+  expired: boolean,
+  joustCount: number,
+): { text: string; color: string } {
   if (state === "SETTLED") return { text: "SETTLED", color: "text-blue-400" };
   if (state === "REFUNDED") return { text: "REFUNDED", color: "text-red-400" };
   if (expired && joustCount > 0) return { text: "AWAITING SETTLEMENT", color: "text-yellow-400" };
@@ -32,29 +47,31 @@ function getPoolStatusDisplay(state: string, expired: boolean, joustCount: numbe
 }
 
 function PoolLifecycleBar({ state }: { state: string }) {
-  const currentIdx = LIFECYCLE_STAGES.indexOf(state as typeof LIFECYCLE_STAGES[number]);
+  const currentIdx = LIFECYCLE_STAGES.indexOf(state as (typeof LIFECYCLE_STAGES)[number]);
   const isRefunded = state === "REFUNDED";
 
   if (isRefunded) {
     return (
       <div className="mb-5">
-        <div className="flex items-center gap-1 mb-1.5">
+        <div className="mb-1.5 flex items-center gap-1">
           {LIFECYCLE_STAGES.map((stage) => (
             <div key={stage} className="flex-1">
-              <div className={`w-full h-1.5 rounded-full ${
-                stage === "PENDING_ARBITER" || stage === "ACTIVE"
-                  ? "bg-red-400/60"
-                  : "bg-muted"
-              }`} />
+              <div
+                className={`h-1.5 w-full rounded-full ${
+                  stage === "PENDING_ARBITER" || stage === "ACTIVE" ? "bg-red-400/60" : "bg-muted"
+                }`}
+              />
             </div>
           ))}
         </div>
-        <div className="flex items-center justify-between text-[10px] text-muted-foreground px-1">
+        <div className="text-muted-foreground flex items-center justify-between px-1 text-[10px]">
           {LIFECYCLE_STAGES.map((stage) => (
-            <span key={stage} className="opacity-50">{stage}</span>
+            <span key={stage} className="opacity-50">
+              {stage}
+            </span>
           ))}
         </div>
-        <div className="text-center mt-1.5">
+        <div className="mt-1.5 text-center">
           <span className="text-xs font-medium text-red-400">Refunded</span>
         </div>
       </div>
@@ -63,20 +80,18 @@ function PoolLifecycleBar({ state }: { state: string }) {
 
   return (
     <div className="mb-5">
-      <div className="flex items-center gap-1 mb-1.5">
+      <div className="mb-1.5 flex items-center gap-1">
         {LIFECYCLE_STAGES.map((stage, i) => (
           <div key={stage} className="flex-1">
-            <div className={`w-full h-1.5 rounded-full transition-colors ${
-              i <= currentIdx
-                ? i === currentIdx
-                  ? "bg-accent"
-                  : "bg-accent/60"
-                : "bg-muted"
-            }`} />
+            <div
+              className={`h-1.5 w-full rounded-full transition-colors ${
+                i <= currentIdx ? (i === currentIdx ? "bg-accent" : "bg-accent/60") : "bg-muted"
+              }`}
+            />
           </div>
         ))}
       </div>
-      <div className="flex items-center justify-between text-[10px] text-muted-foreground px-1">
+      <div className="text-muted-foreground flex items-center justify-between px-1 text-[10px]">
         {LIFECYCLE_STAGES.map((stage, i) => (
           <span key={stage} className={i <= currentIdx ? "text-foreground font-medium" : ""}>
             {stage}
@@ -87,7 +102,7 @@ function PoolLifecycleBar({ state }: { state: string }) {
   );
 }
 
-/* ── Transaction feedback banner ── */
+/* -- Transaction feedback banner -- */
 const TX_BANNER_STYLES: Record<string, string> = {
   pending: "bg-yellow-500/10 border border-yellow-500/30 text-yellow-300",
   confirming: "bg-yellow-500/10 border border-yellow-500/30 text-yellow-300",
@@ -101,7 +116,11 @@ const TX_BANNER_TEXT: Record<string, string> = {
   success: "Transaction confirmed!",
 };
 
-function TxBanner({ status, error, onReset }: {
+function TxBanner({
+  status,
+  error,
+  onReset,
+}: {
   status: string;
   error: string | null;
   onReset: () => void;
@@ -112,12 +131,18 @@ function TxBanner({ status, error, onReset }: {
   const dismissable = status === "success" || status === "error";
 
   return (
-    <div className={`rounded-xl px-4 py-3 mb-3 text-sm flex items-center justify-between ${TX_BANNER_STYLES[status]}`}>
+    <div
+      className={`mb-3 flex items-center justify-between rounded-xl px-4 py-3 text-sm ${TX_BANNER_STYLES[status]}`}
+    >
       <span>{message}</span>
       {dismissable && (
-        <button onClick={onReset} className="ml-3 text-xs underline opacity-70 hover:opacity-100">
+        <Button
+          variant="link"
+          onClick={onReset}
+          className="ml-3 h-auto p-0 text-xs opacity-70 hover:opacity-100"
+        >
           Dismiss
-        </button>
+        </Button>
       )}
     </div>
   );
@@ -162,12 +187,16 @@ export default function PoolDetailPage() {
   const autoAccept = useAutoAccept();
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
+    return (
+      <div className="text-muted-foreground flex h-screen items-center justify-center">
+        Loading...
+      </div>
+    );
   }
 
   const pool = data?.pool;
   if (!pool) {
-    return <div className="text-center py-16 text-muted-foreground">Pool not found</div>;
+    return <div className="text-muted-foreground py-16 text-center">Pool not found</div>;
   }
 
   const collateral = getCollateralInfo(pool.collateral);
@@ -181,7 +210,7 @@ export default function PoolDetailPage() {
   const userAddress = session?.user?.address?.toLowerCase() ?? "";
   const isArbiter = userAddress && pool.arbiterAddress?.toLowerCase() === userAddress;
 
-  /* ── Joust handler ── */
+  /* -- Joust handler -- */
   const handleJoust = async () => {
     if (selectedOption == null || !amount || contractId == null) return;
 
@@ -200,12 +229,7 @@ export default function PoolDetailPage() {
       if (isETH) {
         return sendTransaction("createJoust", joustArgs, amountWei);
       } else {
-        return sendERC20Transaction(
-          "createJoust",
-          joustArgs,
-          pool.collateral,
-          amountWei,
-        );
+        return sendERC20Transaction("createJoust", joustArgs, pool.collateral, amountWei);
       }
     });
 
@@ -235,7 +259,7 @@ export default function PoolDetailPage() {
     }
   };
 
-  /* ── Arbiter actions ── */
+  /* -- Arbiter actions -- */
   const handleAcceptArbiter = async () => {
     if (contractId == null) return;
     const hash = await arbiterTx.execute(async () => {
@@ -263,10 +287,7 @@ export default function PoolDetailPage() {
   const handleSettlePool = async () => {
     if (contractId == null || settleOption == null) return;
     const hash = await arbiterTx.execute(async () => {
-      return sendTransaction("settlePoolAndPayout", [
-        contractId,
-        settleOption,
-      ]);
+      return sendTransaction("settlePoolAndPayout", [contractId, settleOption]);
     });
     if (hash) {
       await recordTx.mutateAsync({
@@ -293,63 +314,69 @@ export default function PoolDetailPage() {
     }
   };
 
-  /* ── Determine which arbiter actions are available ── */
+  /* -- Determine which arbiter actions are available -- */
   const canAcceptArbiter = isArbiter && !pool.arbiterAccepted && pool.state === "PENDING_ARBITER";
   const canClosePool = isArbiter && pool.arbiterAccepted && pool.state === "ACTIVE";
   const canSettlePool = isArbiter && pool.arbiterAccepted && pool.state === "CLOSED";
-  const canRefundPool = isArbiter && pool.arbiterAccepted && (pool.state === "ACTIVE" || pool.state === "CLOSED");
-  const showArbiterPanel = isArbiter && (canAcceptArbiter || canClosePool || canSettlePool || canRefundPool);
+  const canRefundPool =
+    isArbiter && pool.arbiterAccepted && (pool.state === "ACTIVE" || pool.state === "CLOSED");
+  const showArbiterPanel =
+    isArbiter && (canAcceptArbiter || canClosePool || canSettlePool || canRefundPool);
   const arbiterBusy = arbiterTx.status === "pending" || arbiterTx.status === "confirming";
 
   const statusDisplay = getPoolStatusDisplay(pool.state, expired, pool._count?.jousts ?? 0);
 
   return (
-    <main className="pb-20 px-4 pt-4">
-      <button onClick={() => window.history.back()} className="text-sm text-muted-foreground mb-3">
+    <main className="px-4 pt-4 pb-20">
+      <Button
+        variant="ghost"
+        onClick={() => window.history.back()}
+        className="text-muted-foreground mb-3 h-auto p-0 text-sm"
+      >
         &larr; Back
-      </button>
+      </Button>
 
       <div className="mb-4">
-        <h1 className="text-xl font-bold mb-1">{pool.title}</h1>
-        {pool.description && (
-          <p className="text-sm text-muted-foreground">{pool.description}</p>
-        )}
+        <h1 className="mb-1 text-xl font-bold">{pool.title}</h1>
+        {pool.description && <p className="text-muted-foreground text-sm">{pool.description}</p>}
       </div>
 
       <PoolLifecycleBar state={pool.state} />
 
       {/* Arbiter trust banner */}
       {pool.aiArbiter ? (
-        <div className="flex items-center gap-2 rounded-xl bg-violet-500/10 border border-violet-500/30 px-4 py-2.5 mb-4 text-sm text-violet-300">
-          <span className="text-base">🤖</span>
+        <div className="mb-4 flex items-center gap-2 rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 py-2.5 text-sm text-violet-300">
+          <span className="text-base">&#x1F916;</span>
           <div>
             <span className="font-medium">AI Arbiter: {pool.aiArbiter.name}</span>
-            <span className="text-xs text-violet-400 ml-2">Human-backed via AgentBook</span>
+            <span className="ml-2 text-xs text-violet-400">Human-backed via AgentBook</span>
           </div>
         </div>
       ) : pool.arbiter?.worldIdLevel === "orb" ? (
-        <div className="flex items-center gap-2 rounded-xl bg-green-500/10 border border-green-500/30 px-4 py-2.5 mb-4 text-sm text-green-400">
+        <div className="mb-4 flex items-center gap-2 rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-2.5 text-sm text-green-400">
           <span className="text-base">&#x2714;</span>
           <span className="font-medium">Arbitrated by Orb-verified human</span>
         </div>
       ) : (
-        <div className="flex items-center gap-2 rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-2.5 mb-4 text-sm text-red-400">
+        <div className="mb-4 flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-400">
           <span className="text-base">&#x26A0;</span>
           <span className="font-medium">Arbiter not verified with World ID</span>
         </div>
       )}
 
-      <div className="flex items-center gap-3 mb-4 text-xs text-muted-foreground">
-        <span className={`font-medium ${statusDisplay.color}`}>
+      <div className="text-muted-foreground mb-4 flex items-center gap-3 text-xs">
+        <Badge variant="outline" className={statusDisplay.color}>
           {statusDisplay.text}
+        </Badge>
+        <span>
+          {formatAmount(total, collateral.decimals)} {collateral.symbol}
         </span>
-        <span>{formatAmount(total, collateral.decimals)} {collateral.symbol}</span>
         <span>{pool._count?.jousts ?? 0} predictions</span>
         <span>Ends {formatDistanceToNow(new Date(pool.endTime), { addSuffix: true })}</span>
       </div>
 
       {/* Options / Results */}
-      <div className="space-y-2 mb-4">
+      <div className="mb-4 space-y-2">
         {pool.options?.map((opt: any) => {
           const isWinner = pool.state === "SETTLED" && opt.joustType === pool.winningJoustType;
           const isSelected = selectedOption === opt.joustType;
@@ -358,16 +385,16 @@ export default function PoolDetailPage() {
               key={opt.joustType}
               onClick={() => isActive && setSelectedOption(opt.joustType)}
               disabled={!isActive}
-              className={`w-full text-left p-3 rounded-xl border transition-colors ${
+              className={`w-full rounded-xl border p-3 text-left transition-colors ${
                 isWinner
                   ? "border-green-500 bg-green-500/10"
                   : isSelected
-                  ? "border-accent bg-accent/10"
-                  : "border-border bg-card"
+                    ? "border-accent bg-accent/10"
+                    : "border-border bg-card"
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="font-medium text-sm">{opt.label}</span>
+                <span className="text-sm font-medium">{opt.label}</span>
                 {isWinner && <span className="text-xs text-green-400">Winner</span>}
               </div>
             </button>
@@ -382,79 +409,86 @@ export default function PoolDetailPage() {
       {isActive && session?.authenticated && (
         <>
           {showJoust ? (
-            <div className="bg-card rounded-xl border border-border p-4 mb-4">
-              <h3 className="font-semibold text-sm mb-3">Stake Prediction</h3>
-              {selectedOption ? (
-                <>
-                  <p className="text-xs text-muted-foreground mb-2">
-                    Predicting: {pool.options?.find((o: any) => o.joustType === selectedOption)?.label}
-                  </p>
-                  <div className="flex gap-2 mb-2">
-                    <input
-                      type="number"
-                      step="any"
-                      placeholder={formatAmount(BigInt(pool.minJoustAmount?.toString() ?? "0"), collateral.decimals)}
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      className="flex-1 bg-muted rounded-lg px-3 py-2.5 text-sm border border-border outline-none"
-                    />
-                    <span className="flex items-center text-sm text-muted-foreground">{collateral.symbol}</span>
-                  </div>
-                  {ethPrice && (
-                    <p className="text-xs text-muted-foreground mb-3">
-                      ≈ ${((parseFloat(amount) || 0) * ethPrice).toFixed(2)} USD
+            <Card className="mb-4 rounded-xl py-0 shadow-none">
+              <CardContent className="p-4">
+                <h3 className="mb-3 text-sm font-semibold">Stake Prediction</h3>
+                {selectedOption ? (
+                  <>
+                    <p className="text-muted-foreground mb-2 text-xs">
+                      Predicting:{" "}
+                      {pool.options?.find((o: any) => o.joustType === selectedOption)?.label}
                     </p>
-                  )}
-                  {contractId == null && (
-                    <p className="text-xs text-red-400 mb-2">
-                      Pool not yet deployed on-chain. Cannot stake predictions.
-                    </p>
-                  )}
-                  <button
-                    onClick={handleJoust}
-                    disabled={!amount || joustTx.status === "pending" || joustTx.status === "confirming" || contractId == null}
-                    className="w-full py-2.5 bg-accent text-white rounded-xl font-medium text-sm disabled:opacity-50"
-                  >
-                    {joustTx.status === "pending" && "Sending..."}
-                    {joustTx.status === "confirming" && "Confirming..."}
-                    {joustTx.status !== "pending" && joustTx.status !== "confirming" && "Stake Prediction"}
-                  </button>
-                </>
-              ) : (
-                <p className="text-xs text-muted-foreground">Select an option above first</p>
-              )}
-            </div>
+                    <div className="mb-2 flex gap-2">
+                      <Input
+                        type="number"
+                        step="any"
+                        placeholder={formatAmount(
+                          BigInt(pool.minJoustAmount?.toString() ?? "0"),
+                          collateral.decimals,
+                        )}
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        className="flex-1"
+                      />
+                      <span className="text-muted-foreground flex items-center text-sm">
+                        {collateral.symbol}
+                      </span>
+                    </div>
+                    {ethPrice && (
+                      <p className="text-muted-foreground mb-3 text-xs">
+                        ≈ ${((parseFloat(amount) || 0) * ethPrice).toFixed(2)} USD
+                      </p>
+                    )}
+                    {contractId == null && (
+                      <p className="mb-2 text-xs text-red-400">
+                        Pool not yet deployed on-chain. Cannot stake predictions.
+                      </p>
+                    )}
+                    <Button
+                      onClick={handleJoust}
+                      disabled={
+                        !amount ||
+                        joustTx.status === "pending" ||
+                        joustTx.status === "confirming" ||
+                        contractId == null
+                      }
+                      className="w-full"
+                    >
+                      {joustTx.status === "pending" && "Sending..."}
+                      {joustTx.status === "confirming" && "Confirming..."}
+                      {joustTx.status !== "pending" &&
+                        joustTx.status !== "confirming" &&
+                        "Stake Prediction"}
+                    </Button>
+                  </>
+                ) : (
+                  <p className="text-muted-foreground text-xs">Select an option above first</p>
+                )}
+              </CardContent>
+            </Card>
           ) : (
-            <button
+            <Button
               onClick={() => setShowJoust(true)}
-              className="w-full py-3 bg-accent text-white rounded-xl font-semibold mb-4"
+              className="mb-4 w-full py-3 font-semibold"
+              size="lg"
             >
               Stake Prediction
-            </button>
+            </Button>
           )}
         </>
       )}
 
       {/* Share / Invite / Done Actions */}
-      <div className="flex gap-2 mb-4">
-        <button
-          onClick={() => sharePool(pool.id, pool.title)}
-          className="flex-1 py-2 bg-muted rounded-xl text-sm text-center"
-        >
+      <div className="mb-4 flex gap-2">
+        <Button variant="outline" onClick={() => sharePool(pool.id, pool.title)} className="flex-1">
           Share
-        </button>
-        <button
-          onClick={() => shareContacts(pool.title)}
-          className="flex-1 py-2 bg-muted rounded-xl text-sm text-center"
-        >
+        </Button>
+        <Button variant="outline" onClick={() => shareContacts(pool.title)} className="flex-1">
           Invite Friends
-        </button>
-        <button
-          onClick={closeMiniApp}
-          className="flex-1 py-2 bg-muted rounded-xl text-sm text-center"
-        >
+        </Button>
+        <Button variant="outline" onClick={closeMiniApp} className="flex-1">
           Done
-        </button>
+        </Button>
       </div>
 
       {/* AI Settlement Panel */}
@@ -469,203 +503,228 @@ export default function PoolDetailPage() {
           const needsAutoAccept = pool.state === "PENDING_ARBITER" && contractId != null;
 
           return (
-            <div className="bg-card rounded-xl border border-violet-500/30 p-4 mb-4">
-              <div className="flex items-center gap-2 mb-3">
-                <AiArbiterBadge name={pool.aiArbiter.name} size="sm" />
-                <span className="text-xs text-muted-foreground">
-                  {pool.aiArbiter.category}
-                </span>
-              </div>
-
-              {needsAutoAccept && (
-                <button
-                  onClick={async () => {
-                    try {
-                      await autoAccept.mutateAsync();
-                      refetch();
-                    } catch {}
-                  }}
-                  disabled={autoAccept.isPending}
-                  className="w-full py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-medium text-sm disabled:opacity-50 transition-colors mb-2"
-                >
-                  {autoAccept.isPending ? "Agent accepting..." : "Activate AI Arbiter"}
-                </button>
-              )}
-
-              {canRequestSettlement && (
-                <button
-                  onClick={async () => {
-                    try {
-                      await requestSettlement.mutateAsync();
-                      sendHaptic("success");
-                      refetch();
-                    } catch {
-                      sendHaptic("error");
-                    }
-                  }}
-                  disabled={requestSettlement.isPending}
-                  className="w-full py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-medium text-sm disabled:opacity-50 transition-colors"
-                >
-                  {requestSettlement.isPending ? "AI settling..." : "Request AI Settlement"}
-                </button>
-              )}
-
-              {requestSettlement.isError && (
-                <p className="text-xs text-red-400 mt-2">
-                  {requestSettlement.error?.message ?? "Settlement failed"}
-                </p>
-              )}
-
-              {requestSettlement.isSuccess && (
-                <div className="mt-2 bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-2 text-xs text-green-400">
-                  Settlement complete! Winner: {(requestSettlement.data as any)?.winningOption}
-                  {(requestSettlement.data as any)?.reasoning && (
-                    <p className="text-green-300/70 mt-1">
-                      Reasoning: {(requestSettlement.data as any).reasoning}
-                    </p>
-                  )}
+            <Card className="mb-4 rounded-xl border-violet-500/30 py-0 shadow-none">
+              <CardContent className="p-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <AiArbiterBadge name={pool.aiArbiter.name} size="sm" />
+                  <span className="text-muted-foreground text-xs">
+                    {pool.aiArbiter.category}
+                  </span>
                 </div>
-              )}
 
-              {pool.state !== "SETTLED" && pool.state !== "REFUNDED" && !canRequestSettlement && !needsAutoAccept && (
-                <p className="text-xs text-muted-foreground">
-                  AI will settle this pool after it closes or expires.
-                </p>
-              )}
-            </div>
+                {needsAutoAccept && (
+                  <Button
+                    onClick={async () => {
+                      try {
+                        await autoAccept.mutateAsync();
+                        refetch();
+                      } catch {}
+                    }}
+                    disabled={autoAccept.isPending}
+                    className="mb-2 w-full bg-violet-600 hover:bg-violet-700"
+                  >
+                    {autoAccept.isPending ? "Agent accepting..." : "Activate AI Arbiter"}
+                  </Button>
+                )}
+
+                {canRequestSettlement && (
+                  <Button
+                    onClick={async () => {
+                      try {
+                        await requestSettlement.mutateAsync();
+                        sendHaptic("success");
+                        refetch();
+                      } catch {
+                        sendHaptic("error");
+                      }
+                    }}
+                    disabled={requestSettlement.isPending}
+                    className="w-full bg-violet-600 hover:bg-violet-700"
+                  >
+                    {requestSettlement.isPending ? "AI settling..." : "Request AI Settlement"}
+                  </Button>
+                )}
+
+                {requestSettlement.isError && (
+                  <p className="mt-2 text-xs text-red-400">
+                    {requestSettlement.error?.message ?? "Settlement failed"}
+                  </p>
+                )}
+
+                {requestSettlement.isSuccess && (
+                  <div className="mt-2 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2 text-xs text-green-400">
+                    Settlement complete! Winner: {(requestSettlement.data as any)?.winningOption}
+                    {(requestSettlement.data as any)?.reasoning && (
+                      <p className="mt-1 text-green-300/70">
+                        Reasoning: {(requestSettlement.data as any).reasoning}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {pool.state !== "SETTLED" && pool.state !== "REFUNDED" && !canRequestSettlement && !needsAutoAccept && (
+                  <p className="text-muted-foreground text-xs">
+                    AI will settle this pool after it closes or expires.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
           );
         })()
       )}
 
-      {/* Arbiter Panel — requires Orb verification */}
+      {/* Arbiter Panel -- requires Orb verification */}
       {showArbiterPanel && session?.authenticated && (
         <WorldIdGate level="orb" action="verify-identity">
-        <div className="bg-card rounded-xl border border-accent/30 p-4 mb-4">
-          <h3 className="font-semibold text-sm mb-3 text-accent">Arbiter Actions</h3>
+          <Card className="border-accent/30 mb-4 rounded-xl py-0 shadow-none">
+            <CardContent className="p-4">
+              <h3 className="text-accent mb-3 text-sm font-semibold">Arbiter Actions</h3>
 
-          <TxBanner status={arbiterTx.status} error={arbiterTx.error} onReset={arbiterTx.reset} />
+              <TxBanner
+                status={arbiterTx.status}
+                error={arbiterTx.error}
+                onReset={arbiterTx.reset}
+              />
 
-          <div className="space-y-2">
-            {canAcceptArbiter && (
-              <button
-                onClick={handleAcceptArbiter}
-                disabled={arbiterBusy}
-                className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium text-sm disabled:opacity-50 transition-colors"
-              >
-                {arbiterBusy ? "Processing..." : "Accept Arbiter Role"}
-              </button>
-            )}
-
-            {canClosePool && (
-              <button
-                onClick={handleClosePool}
-                disabled={arbiterBusy}
-                className="w-full py-2.5 bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl font-medium text-sm disabled:opacity-50 transition-colors"
-              >
-                {arbiterBusy ? "Processing..." : "Close Pool"}
-              </button>
-            )}
-
-            {canSettlePool && (
-              <>
-                {showSettlePicker ? (
-                  <div className="bg-muted rounded-lg p-3 space-y-2">
-                    <p className="text-xs text-muted-foreground mb-2">Select the winning option:</p>
-                    {pool.options?.map((opt: any) => (
-                      <button
-                        key={opt.joustType}
-                        onClick={() => setSettleOption(opt.joustType)}
-                        className={`w-full text-left p-2.5 rounded-lg border text-sm transition-colors ${
-                          settleOption === opt.joustType
-                            ? "border-accent bg-accent/10 text-foreground"
-                            : "border-border bg-card text-muted-foreground"
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                    <button
-                      onClick={handleSettlePool}
-                      disabled={settleOption == null || arbiterBusy}
-                      className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium text-sm disabled:opacity-50 transition-colors mt-2"
-                    >
-                      {arbiterBusy ? "Processing..." : "Confirm Settlement"}
-                    </button>
-                    <button
-                      onClick={() => { setShowSettlePicker(false); setSettleOption(null); }}
-                      className="w-full py-2 text-xs text-muted-foreground"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setShowSettlePicker(true)}
+              <div className="space-y-2">
+                {canAcceptArbiter && (
+                  <Button
+                    onClick={handleAcceptArbiter}
                     disabled={arbiterBusy}
-                    className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium text-sm disabled:opacity-50 transition-colors"
+                    className="w-full bg-green-600 hover:bg-green-700"
                   >
-                    Settle Pool
-                  </button>
+                    {arbiterBusy ? "Processing..." : "Accept Arbiter Role"}
+                  </Button>
                 )}
-              </>
-            )}
 
-            {canRefundPool && (
-              <button
-                onClick={handleRefundPool}
-                disabled={arbiterBusy}
-                className="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium text-sm disabled:opacity-50 transition-colors"
-              >
-                {arbiterBusy ? "Processing..." : "Refund Pool"}
-              </button>
-            )}
-          </div>
-        </div>
+                {canClosePool && (
+                  <Button
+                    onClick={handleClosePool}
+                    disabled={arbiterBusy}
+                    className="w-full bg-yellow-600 hover:bg-yellow-700"
+                  >
+                    {arbiterBusy ? "Processing..." : "Close Pool"}
+                  </Button>
+                )}
+
+                {canSettlePool && (
+                  <>
+                    {showSettlePicker ? (
+                      <Card className="rounded-lg py-0 shadow-none">
+                        <CardContent className="space-y-2 p-3">
+                          <p className="text-muted-foreground mb-2 text-xs">
+                            Select the winning option:
+                          </p>
+                          {pool.options?.map((opt: any) => (
+                            <button
+                              key={opt.joustType}
+                              onClick={() => setSettleOption(opt.joustType)}
+                              className={`w-full rounded-lg border p-2.5 text-left text-sm transition-colors ${
+                                settleOption === opt.joustType
+                                  ? "border-accent bg-accent/10 text-foreground"
+                                  : "border-border bg-card text-muted-foreground"
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                          <Button
+                            onClick={handleSettlePool}
+                            disabled={settleOption == null || arbiterBusy}
+                            className="mt-2 w-full bg-blue-600 hover:bg-blue-700"
+                          >
+                            {arbiterBusy ? "Processing..." : "Confirm Settlement"}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            onClick={() => {
+                              setShowSettlePicker(false);
+                              setSettleOption(null);
+                            }}
+                            className="text-muted-foreground w-full text-xs"
+                          >
+                            Cancel
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <Button
+                        onClick={() => setShowSettlePicker(true)}
+                        disabled={arbiterBusy}
+                        className="w-full bg-blue-600 hover:bg-blue-700"
+                      >
+                        Settle Pool
+                      </Button>
+                    )}
+                  </>
+                )}
+
+                {canRefundPool && (
+                  <Button
+                    variant="destructive"
+                    onClick={handleRefundPool}
+                    disabled={arbiterBusy}
+                    className="w-full"
+                  >
+                    {arbiterBusy ? "Processing..." : "Refund Pool"}
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </WorldIdGate>
       )}
 
       {/* Arbiter Info */}
-      <div className="bg-card rounded-xl border border-border p-3 mb-4">
-        <div className="text-xs text-muted-foreground mb-1">Arbiter</div>
-        {pool.aiArbiter ? (
-          <div className="flex items-center justify-between">
-            <a href={`/ai-arbiters/${pool.aiArbiter.id}`} className="flex items-center gap-1.5">
-              <AiArbiterBadge name={pool.aiArbiter.name} size="sm" />
-            </a>
-            <span className="text-xs text-muted-foreground">
-              {pool.arbiterAccepted ? "Active" : "Pending"} &middot; {pool.arbiterFee / 100}% fee
-            </span>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between">
-            <span className="text-sm flex items-center gap-1.5">
-              {pool.arbiter?.username ?? shortenAddress(pool.arbiterAddress)}
-              <VerificationBadge level={pool.arbiter?.worldIdLevel} />
-              {isArbiter && <span className="text-xs text-accent ml-0.5">(you)</span>}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {pool.arbiterAccepted ? "Accepted" : "Pending"} &middot; {pool.arbiterFee / 100}% fee
-            </span>
-          </div>
-        )}
-      </div>
+      <Card className="mb-4 rounded-xl py-0 shadow-none">
+        <CardContent className="p-3">
+          <div className="text-muted-foreground mb-1 text-xs">Arbiter</div>
+          {pool.aiArbiter ? (
+            <div className="flex items-center justify-between">
+              <a href={`/ai-arbiters/${pool.aiArbiter.id}`} className="flex items-center gap-1.5">
+                <AiArbiterBadge name={pool.aiArbiter.name} size="sm" />
+              </a>
+              <span className="text-muted-foreground text-xs">
+                {pool.arbiterAccepted ? "Active" : "Pending"} &middot; {pool.arbiterFee / 100}% fee
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-sm">
+                {pool.arbiter?.username ?? shortenAddress(pool.arbiterAddress)}
+                <VerificationBadge level={pool.arbiter?.worldIdLevel} />
+                {isArbiter && <span className="text-accent ml-0.5 text-xs">(you)</span>}
+              </span>
+              <span className="text-muted-foreground text-xs">
+                {pool.arbiterAccepted ? "Accepted" : "Pending"} &middot; {pool.arbiterFee / 100}%
+                fee
+              </span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Recent Predictions */}
       {pool.jousts?.length > 0 && (
         <div className="mb-4">
-          <h3 className="font-semibold text-sm mb-2">Recent Predictions</h3>
+          <h3 className="mb-2 text-sm font-semibold">Recent Predictions</h3>
           <div className="space-y-1.5">
             {pool.jousts.slice(0, 10).map((joust: any) => (
-              <div key={joust.id} className="flex items-center justify-between text-xs bg-card rounded-lg border border-border p-2.5">
-                <span className="flex items-center gap-1">
-                  {joust.user?.username ?? shortenAddress(joust.user?.address ?? "")}
-                  <VerificationBadge level={joust.user?.worldIdLevel} />
-                </span>
-                <span className="text-muted-foreground">
-                  {pool.options?.find((o: any) => o.joustType === joust.joustType)?.label}
-                </span>
-                <span>{formatAmount(BigInt(joust.amount?.toString() ?? "0"), collateral.decimals)} {collateral.symbol}</span>
-              </div>
+              <Card key={joust.id} className="rounded-lg py-0 shadow-none">
+                <CardContent className="flex items-center justify-between p-2.5 text-xs">
+                  <span className="flex items-center gap-1">
+                    {joust.user?.username ?? shortenAddress(joust.user?.address ?? "")}
+                    <VerificationBadge level={joust.user?.worldIdLevel} />
+                  </span>
+                  <span className="text-muted-foreground">
+                    {pool.options?.find((o: any) => o.joustType === joust.joustType)?.label}
+                  </span>
+                  <span>
+                    {formatAmount(BigInt(joust.amount?.toString() ?? "0"), collateral.decimals)}{" "}
+                    {collateral.symbol}
+                  </span>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>

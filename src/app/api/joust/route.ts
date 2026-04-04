@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
 import { requireWorldId, getDeviceJoustLimit } from "@/lib/world-id";
 import { notifyUser } from "@/lib/notifications";
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
       if (limit && amount > limit) {
         return NextResponse.json(
           { error: "Device-verified users have limited stakes. Verify with Orb for unlimited." },
-          { status: 403 }
+          { status: 403 },
         );
       }
     }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { requireSession, getSession } from "@/lib/session";
 import { requireWorldId } from "@/lib/world-id";
 
@@ -12,11 +12,15 @@ const createPoolSchema = z.object({
   collateral: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
   minJoustAmount: z.string(), // BigInt as string
   endTime: z.string().datetime(),
-  options: z.array(z.object({
-    label: z.string().min(1).max(400),
-    joustType: z.number().int().min(1),
-    orderIndex: z.number().int().min(0),
-  })).min(2),
+  options: z
+    .array(
+      z.object({
+        label: z.string().min(1).max(400),
+        joustType: z.number().int().min(1),
+        orderIndex: z.number().int().min(0),
+      }),
+    )
+    .min(2),
   aiArbiterId: z.number().int().optional(),
 });
 
@@ -34,10 +38,7 @@ export async function GET(req: NextRequest) {
   if (mine === "true") {
     const session = await getSession();
     if (session.userId) {
-      where.OR = [
-        { creatorId: session.userId },
-        { arbiterId: session.userId },
-      ];
+      where.OR = [{ creatorId: session.userId }, { arbiterId: session.userId }];
     }
   }
 
@@ -67,7 +68,10 @@ export async function GET(req: NextRequest) {
     return true;
   });
 
-  return NextResponse.json({ pools: filtered, nextCursor: pools.length === limit ? pools[pools.length - 1]?.id : null });
+  return NextResponse.json({
+    pools: filtered,
+    nextCursor: pools.length === limit ? pools[pools.length - 1]?.id : null,
+  });
 }
 
 export async function POST(req: NextRequest) {

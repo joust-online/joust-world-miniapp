@@ -10,8 +10,7 @@ import {
   type AgentKitStorage,
   type AgentkitMode,
 } from "@worldcoin/agentkit";
-import { prisma } from "@/lib/prisma";
-import { getAgentAddress } from "@/lib/agent-wallet";
+import prisma from "@/lib/prisma";
 
 // ── Prisma-backed AgentKit Storage ──
 

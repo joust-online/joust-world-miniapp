@@ -5,6 +5,7 @@ import { MiniKit } from "@worldcoin/minikit-js";
 import { useSession } from "@/hooks/use-profile";
 import { useQueryClient } from "@tanstack/react-query";
 import { shortenAddress } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 export function AuthButton({ large }: { large?: boolean }) {
   const { data: session } = useSession();
@@ -40,7 +41,9 @@ export function AuthButton({ large }: { large?: boolean }) {
         if (MiniKit.isInstalled()) {
           try {
             await MiniKit.requestPermission({ permission: "notifications" as any });
-          } catch {}
+          } catch {
+            // Notification permission is optional
+          }
         }
       }
     } catch (err) {
@@ -54,20 +57,16 @@ export function AuthButton({ large }: { large?: boolean }) {
     return (
       <div className="flex items-center gap-2">
         {session.user.worldIdLevel === "orb" && <span className="text-xs">🔮</span>}
-        <span className="text-sm text-muted-foreground">{session.user.username || shortenAddress(session.user.address)}</span>
+        <span className="text-muted-foreground text-sm">
+          {session.user.username || shortenAddress(session.user.address)}
+        </span>
       </div>
     );
   }
 
   return (
-    <button
-      onClick={handleSignIn}
-      disabled={loading}
-      className={`bg-accent text-white font-medium rounded-full disabled:opacity-50 ${
-        large ? "px-8 py-3 text-base" : "px-4 py-2 text-sm"
-      }`}
-    >
+    <Button onClick={handleSignIn} disabled={loading} size={large ? "lg" : "default"}>
       {loading ? "Connecting..." : "Sign In"}
-    </button>
+    </Button>
   );
 }

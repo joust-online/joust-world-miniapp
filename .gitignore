@@ -15,4 +15,6 @@ out/
 .DS_Store
 *.tsbuildinfo
 next-env.d.ts
-generated/
+
+generated/prisma/
+settings.local.json
