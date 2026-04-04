@@ -40,7 +40,7 @@ export async function sendTransaction(
       {
         to: JOUST_ARENA_ADDRESS,
         data,
-        ...(value ? { value: value.toString() } : {}),
+        ...(value ? { value: `0x${value.toString(16)}` } : {}),
       },
     ],
   });
