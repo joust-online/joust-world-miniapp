@@ -4,6 +4,7 @@ import Link from "next/link";
 import { formatAmount } from "@/lib/utils";
 import { getCollateralInfo } from "@/lib/contracts";
 import { VerificationBadge } from "@/components/verification-badge";
+import { AiArbiterBadge } from "@/components/ai-arbiter-badge";
 import { formatDistanceToNow } from "date-fns";
 
 interface PoolCardProps {
@@ -16,6 +17,7 @@ interface PoolCardProps {
     endTime: string;
     options: { label: string; joustType: number }[];
     creator: { username: string; worldIdLevel?: string };
+    aiArbiter?: { id: number; name: string; category: string } | null;
     _count: { jousts: number };
   };
 }
@@ -60,6 +62,7 @@ export function PoolCard({ pool }: PoolCardProps) {
         <div className="flex items-center gap-1.5 mb-2 text-xs text-muted-foreground">
           <span>by {pool.creator.username}</span>
           <VerificationBadge level={pool.creator.worldIdLevel} />
+          {pool.aiArbiter && <AiArbiterBadge name={pool.aiArbiter.name} size="sm" />}
         </div>
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>{formatAmount(total, collateral.decimals)} {collateral.symbol} pooled</span>

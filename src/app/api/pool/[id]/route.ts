@@ -11,6 +11,7 @@ export async function GET(
     include: {
       creator: { select: { id: true, username: true, address: true, pfp: true, worldIdLevel: true } },
       arbiter: { select: { id: true, username: true, address: true, pfp: true, worldIdLevel: true } },
+      aiArbiter: { select: { id: true, name: true, category: true, strategy: true, walletAddress: true } },
       options: { orderBy: { orderIndex: "asc" } },
       jousts: {
         include: {

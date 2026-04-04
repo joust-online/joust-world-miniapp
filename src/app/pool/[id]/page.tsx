@@ -12,6 +12,8 @@ import { formatAmount, shortenAddress } from "@/lib/utils";
 import { getCollateralInfo, ETH_ADDRESS } from "@/lib/contracts";
 import { sharePool, shareContacts, closeMiniApp, sendHaptic, sendTransaction, sendERC20Transaction } from "@/lib/minikit";
 import { HonorVote } from "@/components/honor-vote";
+import { AiArbiterBadge } from "@/components/ai-arbiter-badge";
+import { useRequestSettlement, useAutoAccept } from "@/hooks/use-ai-arbiter";
 import { formatDistanceToNow } from "date-fns";
 import { parseUnits } from "viem";
 import { useQueryClient } from "@tanstack/react-query";
@@ -153,6 +155,11 @@ export default function PoolDetailPage() {
   // Settle flow state
   const [showSettlePicker, setShowSettlePicker] = useState(false);
   const [settleOption, setSettleOption] = useState<number | null>(null);
+
+  // AI settlement
+  const aiArbiterId = data?.pool?.aiArbiter?.id;
+  const requestSettlement = useRequestSettlement(aiArbiterId ?? 0, id);
+  const autoAccept = useAutoAccept();
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
@@ -311,8 +318,16 @@ export default function PoolDetailPage() {
 
       <PoolLifecycleBar state={pool.state} />
 
-      {/* Arbiter World ID trust banner */}
-      {pool.arbiter?.worldIdLevel === "orb" ? (
+      {/* Arbiter trust banner */}
+      {pool.aiArbiter ? (
+        <div className="flex items-center gap-2 rounded-xl bg-violet-500/10 border border-violet-500/30 px-4 py-2.5 mb-4 text-sm text-violet-300">
+          <span className="text-base">🤖</span>
+          <div>
+            <span className="font-medium">AI Arbiter: {pool.aiArbiter.name}</span>
+            <span className="text-xs text-violet-400 ml-2">Human-backed via AgentBook</span>
+          </div>
+        </div>
+      ) : pool.arbiter?.worldIdLevel === "orb" ? (
         <div className="flex items-center gap-2 rounded-xl bg-green-500/10 border border-green-500/30 px-4 py-2.5 mb-4 text-sm text-green-400">
           <span className="text-base">&#x2714;</span>
           <span className="font-medium">Arbitrated by Orb-verified human</span>
@@ -442,6 +457,86 @@ export default function PoolDetailPage() {
         </button>
       </div>
 
+      {/* AI Settlement Panel */}
+      {pool.aiArbiter && session?.authenticated && (
+        (() => {
+          const canRequestSettlement =
+            pool._count?.jousts > 0 &&
+            pool.state !== "SETTLED" &&
+            pool.state !== "REFUNDED" &&
+            (pool.state === "CLOSED" || expired);
+
+          const needsAutoAccept = pool.state === "PENDING_ARBITER" && contractId != null;
+
+          return (
+            <div className="bg-card rounded-xl border border-violet-500/30 p-4 mb-4">
+              <div className="flex items-center gap-2 mb-3">
+                <AiArbiterBadge name={pool.aiArbiter.name} size="sm" />
+                <span className="text-xs text-muted-foreground">
+                  {pool.aiArbiter.category}
+                </span>
+              </div>
+
+              {needsAutoAccept && (
+                <button
+                  onClick={async () => {
+                    try {
+                      await autoAccept.mutateAsync();
+                      refetch();
+                    } catch {}
+                  }}
+                  disabled={autoAccept.isPending}
+                  className="w-full py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-medium text-sm disabled:opacity-50 transition-colors mb-2"
+                >
+                  {autoAccept.isPending ? "Agent accepting..." : "Activate AI Arbiter"}
+                </button>
+              )}
+
+              {canRequestSettlement && (
+                <button
+                  onClick={async () => {
+                    try {
+                      await requestSettlement.mutateAsync();
+                      sendHaptic("success");
+                      refetch();
+                    } catch {
+                      sendHaptic("error");
+                    }
+                  }}
+                  disabled={requestSettlement.isPending}
+                  className="w-full py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-medium text-sm disabled:opacity-50 transition-colors"
+                >
+                  {requestSettlement.isPending ? "AI settling..." : "Request AI Settlement"}
+                </button>
+              )}
+
+              {requestSettlement.isError && (
+                <p className="text-xs text-red-400 mt-2">
+                  {requestSettlement.error?.message ?? "Settlement failed"}
+                </p>
+              )}
+
+              {requestSettlement.isSuccess && (
+                <div className="mt-2 bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-2 text-xs text-green-400">
+                  Settlement complete! Winner: {(requestSettlement.data as any)?.winningOption}
+                  {(requestSettlement.data as any)?.reasoning && (
+                    <p className="text-green-300/70 mt-1">
+                      Reasoning: {(requestSettlement.data as any).reasoning}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {pool.state !== "SETTLED" && pool.state !== "REFUNDED" && !canRequestSettlement && !needsAutoAccept && (
+                <p className="text-xs text-muted-foreground">
+                  AI will settle this pool after it closes or expires.
+                </p>
+              )}
+            </div>
+          );
+        })()
+      )}
+
       {/* Arbiter Panel — requires Orb verification */}
       {showArbiterPanel && session?.authenticated && (
         <WorldIdGate level="orb" action="verify-identity">
@@ -532,16 +627,27 @@ export default function PoolDetailPage() {
       {/* Arbiter Info */}
       <div className="bg-card rounded-xl border border-border p-3 mb-4">
         <div className="text-xs text-muted-foreground mb-1">Arbiter</div>
-        <div className="flex items-center justify-between">
-          <span className="text-sm flex items-center gap-1.5">
-            {pool.arbiter?.username ?? shortenAddress(pool.arbiterAddress)}
-            <VerificationBadge level={pool.arbiter?.worldIdLevel} />
-            {isArbiter && <span className="text-xs text-accent ml-0.5">(you)</span>}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            {pool.arbiterAccepted ? "Accepted" : "Pending"} &middot; {pool.arbiterFee / 100}% fee
-          </span>
-        </div>
+        {pool.aiArbiter ? (
+          <div className="flex items-center justify-between">
+            <a href={`/ai-arbiters/${pool.aiArbiter.id}`} className="flex items-center gap-1.5">
+              <AiArbiterBadge name={pool.aiArbiter.name} size="sm" />
+            </a>
+            <span className="text-xs text-muted-foreground">
+              {pool.arbiterAccepted ? "Active" : "Pending"} &middot; {pool.arbiterFee / 100}% fee
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between">
+            <span className="text-sm flex items-center gap-1.5">
+              {pool.arbiter?.username ?? shortenAddress(pool.arbiterAddress)}
+              <VerificationBadge level={pool.arbiter?.worldIdLevel} />
+              {isArbiter && <span className="text-xs text-accent ml-0.5">(you)</span>}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {pool.arbiterAccepted ? "Accepted" : "Pending"} &middot; {pool.arbiterFee / 100}% fee
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Recent Predictions */}

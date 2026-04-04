@@ -12,6 +12,8 @@ import { joustArenaAbi } from "@/lib/abi";
 import { sendHaptic, createPoolOnChain } from "@/lib/minikit";
 import { createPublicClient, http, decodeEventLog } from "viem";
 import { worldchain } from "viem/chains";
+import { AiArbiterPicker } from "@/components/ai-arbiter-picker";
+import { useAutoAccept } from "@/hooks/use-ai-arbiter";
 
 function CreatePoolForm() {
   const router = useRouter();
@@ -27,6 +29,14 @@ function CreatePoolForm() {
   const [poolId, setPoolId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const ethPrice = useEthPrice();
+  const autoAccept = useAutoAccept();
+
+  const [arbiterMode, setArbiterMode] = useState<"self" | "ai">("self");
+  const [selectedAiArbiter, setSelectedAiArbiter] = useState<{
+    id: number;
+    walletAddress: string;
+    name: string;
+  } | null>(null);
 
   const [options, setOptions] = useState([
     { label: "Yes", joustType: 1, orderIndex: 0 },
@@ -41,16 +51,22 @@ function CreatePoolForm() {
     const endTimestamp = Math.floor(new Date(endDate).getTime() / 1000);
 
     try {
+      const isAiArbiter = arbiterMode === "ai" && selectedAiArbiter;
+      const arbiterAddress = isAiArbiter
+        ? selectedAiArbiter.walletAddress
+        : session?.user?.address;
+
       // Step 1: Create pool record in DB
       const result = await createPool.mutateAsync({
         title,
         description: description || undefined,
-        arbiterAddress: session?.user?.address,
+        arbiterAddress,
         arbiterFee: parseInt(arbiterFee),
         collateral: token.address,
         minJoustAmount: minAmountBigInt.toString(),
         endTime: new Date(endDate).toISOString(),
         options,
+        ...(isAiArbiter ? { aiArbiterId: selectedAiArbiter.id } : {}),
       });
 
       const dbPoolId = result.pool.id;
@@ -59,7 +75,7 @@ function CreatePoolForm() {
 
       // Step 2: Deploy to chain via MiniKit
       const txResult = await createPoolOnChain({
-        arbiter: session?.user?.address,
+        arbiter: arbiterAddress,
         arbiterFee: parseInt(arbiterFee),
         collateral: token.address,
         minJoustAmount: minAmountBigInt,
@@ -147,6 +163,15 @@ function CreatePoolForm() {
         throw new Error(err.error ?? "Failed to record deployment");
       }
 
+      // Step 6: Auto-accept arbiter if AI arbiter
+      if (isAiArbiter) {
+        try {
+          await autoAccept.mutateAsync();
+        } catch {
+          // Non-critical — pool is created, agent will accept later
+        }
+      }
+
       setStep("done");
       sendHaptic("success");
       router.push(`/pool/${dbPoolId}`);
@@ -222,6 +247,41 @@ function CreatePoolForm() {
             </button>
           )}
         </div>
+      </div>
+
+      {/* Arbiter Selection */}
+      <div>
+        <label className="text-sm text-muted-foreground block mb-1">Arbiter</label>
+        <div className="flex gap-2 mb-2">
+          <button
+            type="button"
+            onClick={() => { setArbiterMode("self"); setSelectedAiArbiter(null); }}
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+              arbiterMode === "self"
+                ? "bg-accent text-white"
+                : "bg-muted text-muted-foreground"
+            }`}
+          >
+            Self Arbiter
+          </button>
+          <button
+            type="button"
+            onClick={() => setArbiterMode("ai")}
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+              arbiterMode === "ai"
+                ? "bg-violet-600 text-white"
+                : "bg-muted text-muted-foreground"
+            }`}
+          >
+            🤖 AI Arbiter
+          </button>
+        </div>
+        {arbiterMode === "ai" && (
+          <AiArbiterPicker
+            selected={selectedAiArbiter}
+            onSelect={setSelectedAiArbiter}
+          />
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3">

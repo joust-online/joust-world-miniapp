@@ -17,6 +17,7 @@ const createPoolSchema = z.object({
     joustType: z.number().int().min(1),
     orderIndex: z.number().int().min(0),
   })).min(2),
+  aiArbiterId: z.number().int().optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -51,6 +52,7 @@ export async function GET(req: NextRequest) {
     include: {
       creator: { select: { id: true, username: true, address: true, worldIdLevel: true } },
       arbiter: { select: { id: true, username: true, address: true, worldIdLevel: true } },
+      aiArbiter: { select: { id: true, name: true, category: true } },
       options: { orderBy: { orderIndex: "asc" } },
       _count: { select: { jousts: true } },
     },
@@ -94,6 +96,7 @@ export async function POST(req: NextRequest) {
         supportedJoustTypes: data.options.length,
         state: isSelfArbiter ? "ACTIVE" : "PENDING_ARBITER",
         endTime: new Date(data.endTime),
+        ...(data.aiArbiterId ? { aiArbiterId: data.aiArbiterId } : {}),
         options: {
           create: data.options.map((opt) => ({
             joustType: opt.joustType,

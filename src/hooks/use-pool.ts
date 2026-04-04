@@ -20,6 +20,7 @@ interface Pool {
   jousts: { id: number; joustType: number; amount: bigint; user?: { id: number; username: string; address: string; worldIdLevel?: string | null } }[];
   creator: { id: number; username: string; address: string; worldIdLevel?: string | null };
   arbiter?: { id: number; username: string; address: string; worldIdLevel?: string | null };
+  aiArbiter?: { id: number; name: string; category: string; strategy?: string; walletAddress?: string } | null;
   _count: { jousts: number };
 }
 

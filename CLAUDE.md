@@ -89,6 +89,41 @@ Dual delivery: DB record (for in-app notification bell) + push notification via 
 
 Enforcement: `requireWorldId()` in `src/lib/world-id.ts`, joust amount limits in `JOUST_LIMITS`.
 
+## AI Arbiters (AgentKit Integration)
+
+AI Arbiters are autonomous settlement agents backed by World ID via AgentBook. Users create AI arbiter profiles with settlement strategies; a server-side agent wallet executes on-chain settlements.
+
+### Architecture
+- **Agent Wallet**: Server-side EOA (`AGENT_WALLET_PRIVATE_KEY`) signs transactions via viem. Shared by all AI arbiters.
+- **AgentBook**: Agent wallet registered via `npx @worldcoin/agentkit-cli register <address>`. Verified with `createAgentBookVerifier().lookupHuman()`.
+- **x402 Settlement**: Settlement endpoint protected by AgentKit hooks (`createAgentkitHooks` with `free-trial` mode, 3 free settlements per human).
+- **AI Decision**: LLM (OpenAI/Anthropic) determines outcomes based on arbiter's `strategy` field.
+- **Storage**: Prisma-backed `AgentKitStorage` (not in-memory) for usage tracking + nonce replay protection.
+
+### Key Files
+| File | Purpose |
+|---|---|
+| `src/lib/agent-wallet.ts` | Server viem walletClient, on-chain tx helpers |
+| `src/lib/agentkit.ts` | AgentBook verifier, hooks, storage, extension declarations |
+| `src/lib/ai-settler.ts` | LLM-based outcome determination |
+| `src/app/api/ai-arbiter/route.ts` | CRUD for AI arbiter profiles |
+| `src/app/api/ai-arbiter/[id]/route.ts` | AI arbiter detail + stats + AgentBook verification |
+| `src/app/api/ai-arbiter/[id]/settle/[poolId]/route.ts` | x402-protected autonomous settlement |
+| `src/app/api/ai-arbiter/auto-accept/route.ts` | Auto-accept arbiter delegation |
+| `src/hooks/use-ai-arbiter.ts` | React Query hooks for AI arbiters |
+| `src/components/ai-arbiter-badge.tsx` | Badge component with AgentBook verification |
+| `src/components/ai-arbiter-picker.tsx` | Arbiter selection in pool creation |
+| `src/app/ai-arbiters/` | List, detail, and create pages |
+
+### AgentKit APIs Used
+`createAgentBookVerifier`, `createAgentkitHooks`, `declareAgentkitExtension`, `agentkitResourceServerExtension`, `AgentKitStorage` (Prisma impl), `parseAgentkitHeader`, `validateAgentkitMessage`, `verifyAgentkitSignature`, `InMemoryAgentKitStorage`, free-trial mode.
+
+### Setup
+1. Generate agent wallet: any EOA private key
+2. Fund it with ETH on World Chain for gas
+3. Register in AgentBook: `npx @worldcoin/agentkit-cli register <agent-address>`
+4. Set `AGENT_WALLET_PRIVATE_KEY` and `OPENAI_API_KEY`/`ANTHROPIC_API_KEY` in `.env`
+
 ## Testing in World App
 1. `npm run dev` to start local server
 2. `ngrok http 3000` to create tunnel
