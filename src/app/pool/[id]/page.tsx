@@ -156,13 +156,14 @@ export default function PoolDetailPage() {
     const amountWei = parseUnits(amount, collateral.decimals);
 
     const hash = await joustTx.execute(async () => {
-      // Build the Joust struct: { id: poolId, amount, player, joustType }
-      const joustArgs = [{
-        id: contractId.toString(),
-        amount: amountWei.toString(),
-        player: session!.user.address,
+      // Build the Joust struct as tuple: [id, amount, player, joustType]
+      const joustStruct = {
+        id: contractId,
+        amount: amountWei,
+        player: session!.user.address as `0x${string}`,
         joustType: selectedOption,
-      }];
+      };
+      const joustArgs = [joustStruct];
 
       if (isETH) {
         return sendTransaction("createJoust", joustArgs, amountWei);
