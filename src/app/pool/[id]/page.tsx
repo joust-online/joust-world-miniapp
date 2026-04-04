@@ -120,6 +120,16 @@ export default function PoolDetailPage() {
   const [ethPrice, setEthPrice] = useState<number | null>(null);
   const [showJoust, setShowJoust] = useState(false);
 
+  // Auto-fill min stake amount when pool loads
+  useEffect(() => {
+    if (data?.pool && !amount) {
+      const pool = data.pool;
+      const collateral = getCollateralInfo(pool.collateral);
+      const min = formatAmount(BigInt(pool.minJoustAmount?.toString() ?? "0"), collateral.decimals);
+      setAmount(min);
+    }
+  }, [data?.pool]);
+
   // Fetch ETH price for USD display
   useEffect(() => {
     fetch("https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd")
@@ -352,7 +362,7 @@ export default function PoolDetailPage() {
                       type="number"
                       step="any"
                       placeholder={formatAmount(BigInt(pool.minJoustAmount?.toString() ?? "0"), collateral.decimals)}
-                      value={amount || formatAmount(BigInt(pool.minJoustAmount?.toString() ?? "0"), collateral.decimals)}
+                      value={amount}
                       onChange={(e) => setAmount(e.target.value)}
                       className="flex-1 bg-muted rounded-lg px-3 py-2.5 text-sm border border-border outline-none"
                     />
@@ -360,7 +370,7 @@ export default function PoolDetailPage() {
                   </div>
                   {ethPrice && (
                     <p className="text-xs text-muted-foreground mb-3">
-                      ≈ ${((parseFloat(amount || formatAmount(BigInt(pool.minJoustAmount?.toString() ?? "0"), collateral.decimals)) || 0) * ethPrice).toFixed(2)} USD
+                      ≈ ${((parseFloat(amount) || 0) * ethPrice).toFixed(2)} USD
                     </p>
                   )}
                   {contractId == null && (
