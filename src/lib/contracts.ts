@@ -13,6 +13,6 @@ export const WETH_ADDRESS = "0x4200000000000000000000000000000000000006" as Addr
 export const ETH_ADDRESS = "0x0000000000000000000000000000000000000000" as Address;
 
 export const COLLATERAL_TOKENS: Record<string, { symbol: string; decimals: number; address: Address }> = {
-  WETH: { symbol: "WETH", decimals: 18, address: WETH_ADDRESS },
+  ETH: { symbol: "ETH", decimals: 18, address: ETH_ADDRESS },
   USDC: { symbol: "USDC", decimals: 6, address: USDC_ADDRESS },
 };
