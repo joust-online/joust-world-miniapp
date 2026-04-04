@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import type { MiniAppWalletAuthSuccessPayload } from "@worldcoin/minikit-js/commands";
 import { verifySiweMessage } from "@worldcoin/minikit-js/siwe";
 import { getSession } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 
 type RequestBody = {
   payload: MiniAppWalletAuthSuccessPayload;

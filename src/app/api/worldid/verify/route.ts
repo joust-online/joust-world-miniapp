@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireSession } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 
 const RP_ID = process.env.WORLD_RP_ID!;
 

@@ -171,7 +171,7 @@ Read the current file, then replace the POST handler. Key changes:
 ```typescript
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
 import { notifyUser } from "@/lib/notifications";
 import {
@@ -608,7 +608,7 @@ git commit -m "CORS lockdown — restrict API access to allowed origins (C3)"
 ```typescript
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
 import { getDeviceJoustLimit } from "@/lib/world-id";
 import { notifyUser } from "@/lib/notifications";

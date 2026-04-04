@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
 import { publicClient } from "@/lib/viem-server";
 import { notifyUser } from "@/lib/notifications";
