@@ -19,6 +19,8 @@ import {
   sendERC20Transaction,
 } from "@/lib/minikit";
 import { HonorVote } from "@/components/honor-vote";
+import { AiArbiterBadge } from "@/components/ai-arbiter-badge";
+import { useRequestSettlement, useAutoAccept } from "@/hooks/use-ai-arbiter";
 import { formatDistanceToNow } from "date-fns";
 import { parseUnits } from "viem";
 import { useQueryClient } from "@tanstack/react-query";
@@ -27,8 +29,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
-/* ── Pool lifecycle stages ── */
-const LIFECYCLE_STAGES = ["PENDING", "ACTIVE", "CLOSED", "SETTLED"] as const;
+/* -- Pool lifecycle stages -- */
+const LIFECYCLE_STAGES = ["PENDING_ARBITER", "ACTIVE", "CLOSED", "SETTLED"] as const;
 
 function getPoolStatusDisplay(
   state: string,
@@ -56,7 +58,7 @@ function PoolLifecycleBar({ state }: { state: string }) {
             <div key={stage} className="flex-1">
               <div
                 className={`h-1.5 w-full rounded-full ${
-                  stage === "PENDING" || stage === "ACTIVE" ? "bg-red-400/60" : "bg-muted"
+                  stage === "PENDING_ARBITER" || stage === "ACTIVE" ? "bg-red-400/60" : "bg-muted"
                 }`}
               />
             </div>
@@ -100,7 +102,7 @@ function PoolLifecycleBar({ state }: { state: string }) {
   );
 }
 
-/* ── Transaction feedback banner ── */
+/* -- Transaction feedback banner -- */
 const TX_BANNER_STYLES: Record<string, string> = {
   pending: "bg-yellow-500/10 border border-yellow-500/30 text-yellow-300",
   confirming: "bg-yellow-500/10 border border-yellow-500/30 text-yellow-300",
@@ -179,6 +181,11 @@ export default function PoolDetailPage() {
   const [showSettlePicker, setShowSettlePicker] = useState(false);
   const [settleOption, setSettleOption] = useState<number | null>(null);
 
+  // AI settlement
+  const aiArbiterId = data?.pool?.aiArbiter?.id;
+  const requestSettlement = useRequestSettlement(aiArbiterId ?? 0, id);
+  const autoAccept = useAutoAccept();
+
   if (isLoading) {
     return (
       <div className="text-muted-foreground flex h-screen items-center justify-center">
@@ -203,7 +210,7 @@ export default function PoolDetailPage() {
   const userAddress = session?.user?.address?.toLowerCase() ?? "";
   const isArbiter = userAddress && pool.arbiterAddress?.toLowerCase() === userAddress;
 
-  /* ── Joust handler ── */
+  /* -- Joust handler -- */
   const handleJoust = async () => {
     if (selectedOption == null || !amount || contractId == null) return;
 
@@ -252,7 +259,7 @@ export default function PoolDetailPage() {
     }
   };
 
-  /* ── Arbiter actions ── */
+  /* -- Arbiter actions -- */
   const handleAcceptArbiter = async () => {
     if (contractId == null) return;
     const hash = await arbiterTx.execute(async () => {
@@ -307,8 +314,8 @@ export default function PoolDetailPage() {
     }
   };
 
-  /* ── Determine which arbiter actions are available ── */
-  const canAcceptArbiter = isArbiter && !pool.arbiterAccepted && pool.state === "PENDING";
+  /* -- Determine which arbiter actions are available -- */
+  const canAcceptArbiter = isArbiter && !pool.arbiterAccepted && pool.state === "PENDING_ARBITER";
   const canClosePool = isArbiter && pool.arbiterAccepted && pool.state === "ACTIVE";
   const canSettlePool = isArbiter && pool.arbiterAccepted && pool.state === "CLOSED";
   const canRefundPool =
@@ -336,8 +343,16 @@ export default function PoolDetailPage() {
 
       <PoolLifecycleBar state={pool.state} />
 
-      {/* Arbiter World ID trust banner */}
-      {pool.arbiter?.worldIdLevel === "orb" ? (
+      {/* Arbiter trust banner */}
+      {pool.aiArbiter ? (
+        <div className="mb-4 flex items-center gap-2 rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 py-2.5 text-sm text-violet-300">
+          <span className="text-base">&#x1F916;</span>
+          <div>
+            <span className="font-medium">AI Arbiter: {pool.aiArbiter.name}</span>
+            <span className="ml-2 text-xs text-violet-400">Human-backed via AgentBook</span>
+          </div>
+        </div>
+      ) : pool.arbiter?.worldIdLevel === "orb" ? (
         <div className="mb-4 flex items-center gap-2 rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-2.5 text-sm text-green-400">
           <span className="text-base">&#x2714;</span>
           <span className="font-medium">Arbitrated by Orb-verified human</span>
@@ -476,7 +491,89 @@ export default function PoolDetailPage() {
         </Button>
       </div>
 
-      {/* Arbiter Panel — requires Orb verification */}
+      {/* AI Settlement Panel */}
+      {pool.aiArbiter && session?.authenticated && (
+        (() => {
+          const canRequestSettlement =
+            pool._count?.jousts > 0 &&
+            pool.state !== "SETTLED" &&
+            pool.state !== "REFUNDED" &&
+            (pool.state === "CLOSED" || expired);
+
+          const needsAutoAccept = pool.state === "PENDING_ARBITER" && contractId != null;
+
+          return (
+            <Card className="mb-4 rounded-xl border-violet-500/30 py-0 shadow-none">
+              <CardContent className="p-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <AiArbiterBadge name={pool.aiArbiter.name} size="sm" />
+                  <span className="text-muted-foreground text-xs">
+                    {pool.aiArbiter.category}
+                  </span>
+                </div>
+
+                {needsAutoAccept && (
+                  <Button
+                    onClick={async () => {
+                      try {
+                        await autoAccept.mutateAsync();
+                        refetch();
+                      } catch {}
+                    }}
+                    disabled={autoAccept.isPending}
+                    className="mb-2 w-full bg-violet-600 hover:bg-violet-700"
+                  >
+                    {autoAccept.isPending ? "Agent accepting..." : "Activate AI Arbiter"}
+                  </Button>
+                )}
+
+                {canRequestSettlement && (
+                  <Button
+                    onClick={async () => {
+                      try {
+                        await requestSettlement.mutateAsync();
+                        sendHaptic("success");
+                        refetch();
+                      } catch {
+                        sendHaptic("error");
+                      }
+                    }}
+                    disabled={requestSettlement.isPending}
+                    className="w-full bg-violet-600 hover:bg-violet-700"
+                  >
+                    {requestSettlement.isPending ? "AI settling..." : "Request AI Settlement"}
+                  </Button>
+                )}
+
+                {requestSettlement.isError && (
+                  <p className="mt-2 text-xs text-red-400">
+                    {requestSettlement.error?.message ?? "Settlement failed"}
+                  </p>
+                )}
+
+                {requestSettlement.isSuccess && (
+                  <div className="mt-2 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2 text-xs text-green-400">
+                    Settlement complete! Winner: {(requestSettlement.data as any)?.winningOption}
+                    {(requestSettlement.data as any)?.reasoning && (
+                      <p className="mt-1 text-green-300/70">
+                        Reasoning: {(requestSettlement.data as any).reasoning}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {pool.state !== "SETTLED" && pool.state !== "REFUNDED" && !canRequestSettlement && !needsAutoAccept && (
+                  <p className="text-muted-foreground text-xs">
+                    AI will settle this pool after it closes or expires.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })()
+      )}
+
+      {/* Arbiter Panel -- requires Orb verification */}
       {showArbiterPanel && session?.authenticated && (
         <WorldIdGate level="orb" action="verify-identity">
           <Card className="border-accent/30 mb-4 rounded-xl py-0 shadow-none">
@@ -582,16 +679,28 @@ export default function PoolDetailPage() {
       <Card className="mb-4 rounded-xl py-0 shadow-none">
         <CardContent className="p-3">
           <div className="text-muted-foreground mb-1 text-xs">Arbiter</div>
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-sm">
-              {pool.arbiter?.username ?? shortenAddress(pool.arbiterAddress)}
-              <VerificationBadge level={pool.arbiter?.worldIdLevel} />
-              {isArbiter && <span className="text-accent ml-0.5 text-xs">(you)</span>}
-            </span>
-            <span className="text-muted-foreground text-xs">
-              {pool.arbiterAccepted ? "Accepted" : "Pending"} &middot; {pool.arbiterFee / 100}% fee
-            </span>
-          </div>
+          {pool.aiArbiter ? (
+            <div className="flex items-center justify-between">
+              <a href={`/ai-arbiters/${pool.aiArbiter.id}`} className="flex items-center gap-1.5">
+                <AiArbiterBadge name={pool.aiArbiter.name} size="sm" />
+              </a>
+              <span className="text-muted-foreground text-xs">
+                {pool.arbiterAccepted ? "Active" : "Pending"} &middot; {pool.arbiterFee / 100}% fee
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-sm">
+                {pool.arbiter?.username ?? shortenAddress(pool.arbiterAddress)}
+                <VerificationBadge level={pool.arbiter?.worldIdLevel} />
+                {isArbiter && <span className="text-accent ml-0.5 text-xs">(you)</span>}
+              </span>
+              <span className="text-muted-foreground text-xs">
+                {pool.arbiterAccepted ? "Accepted" : "Pending"} &middot; {pool.arbiterFee / 100}%
+                fee
+              </span>
+            </div>
+          )}
         </CardContent>
       </Card>
 

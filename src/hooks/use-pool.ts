@@ -25,6 +25,7 @@ interface Pool {
   }[];
   creator: { id: number; username: string; address: string; worldIdLevel?: string | null };
   arbiter?: { id: number; username: string; address: string; worldIdLevel?: string | null };
+  aiArbiter?: { id: number; name: string; category: string; strategy?: string; walletAddress?: string } | null;
   _count: { jousts: number };
 }
 

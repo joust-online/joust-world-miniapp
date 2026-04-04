@@ -21,6 +21,7 @@ const createPoolSchema = z.object({
       }),
     )
     .min(2),
+  aiArbiterId: z.number().int().optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -52,6 +53,7 @@ export async function GET(req: NextRequest) {
     include: {
       creator: { select: { id: true, username: true, address: true, worldIdLevel: true } },
       arbiter: { select: { id: true, username: true, address: true, worldIdLevel: true } },
+      aiArbiter: { select: { id: true, name: true, category: true } },
       options: { orderBy: { orderIndex: "asc" } },
       _count: { select: { jousts: true } },
     },
@@ -83,6 +85,21 @@ export async function POST(req: NextRequest) {
     }
 
     const data = parsed.data;
+
+    // Validate AI arbiter reference
+    if (data.aiArbiterId) {
+      const aiArbiter = await prisma.aiArbiter.findUnique({
+        where: { id: data.aiArbiterId },
+        select: { walletAddress: true },
+      });
+      if (!aiArbiter) {
+        return NextResponse.json({ error: "AI Arbiter not found" }, { status: 400 });
+      }
+      if (aiArbiter.walletAddress !== data.arbiterAddress.toLowerCase()) {
+        return NextResponse.json({ error: "Arbiter address does not match AI arbiter" }, { status: 400 });
+      }
+    }
+
     const isSelfArbiter = data.arbiterAddress.toLowerCase() === session.address.toLowerCase();
 
     const pool = await prisma.pool.create({
@@ -98,6 +115,7 @@ export async function POST(req: NextRequest) {
         supportedJoustTypes: data.options.length,
         state: isSelfArbiter ? "ACTIVE" : "PENDING_ARBITER",
         endTime: new Date(data.endTime),
+        ...(data.aiArbiterId ? { aiArbiterId: data.aiArbiterId } : {}),
         options: {
           create: data.options.map((opt) => ({
             joustType: opt.joustType,

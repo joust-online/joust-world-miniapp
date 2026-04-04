@@ -12,6 +12,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       arbiter: {
         select: { id: true, username: true, address: true, pfp: true, worldIdLevel: true },
       },
+      aiArbiter: {
+        select: { id: true, name: true, category: true, strategy: true, walletAddress: true },
+      },
       options: { orderBy: { orderIndex: "asc" } },
       jousts: {
         include: {

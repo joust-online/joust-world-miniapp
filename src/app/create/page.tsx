@@ -12,6 +12,8 @@ import { joustArenaAbi } from "@/lib/abi";
 import { sendHaptic, createPoolOnChain } from "@/lib/minikit";
 import { createPublicClient, http, decodeEventLog } from "viem";
 import { worldchain } from "viem/chains";
+import { AiArbiterPicker } from "@/components/ai-arbiter-picker";
+import { useAutoAccept } from "@/hooks/use-ai-arbiter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -38,6 +40,14 @@ function CreatePoolForm() {
   const [poolId, setPoolId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const ethPrice = useEthPrice();
+  const autoAccept = useAutoAccept();
+
+  const [arbiterMode, setArbiterMode] = useState<"self" | "ai">("self");
+  const [selectedAiArbiter, setSelectedAiArbiter] = useState<{
+    id: number;
+    walletAddress: string;
+    name: string;
+  } | null>(null);
 
   const [options, setOptions] = useState([
     { label: "Yes", joustType: 1, orderIndex: 0 },
@@ -52,16 +62,22 @@ function CreatePoolForm() {
     const endTimestamp = Math.floor(new Date(endDate).getTime() / 1000);
 
     try {
+      const isAiArbiter = arbiterMode === "ai" && selectedAiArbiter;
+      const arbiterAddress = isAiArbiter
+        ? selectedAiArbiter.walletAddress
+        : session?.user?.address;
+
       // Step 1: Create pool record in DB
       const result = await createPool.mutateAsync({
         title,
         description: description || undefined,
-        arbiterAddress: session?.user?.address,
+        arbiterAddress,
         arbiterFee: parseInt(arbiterFee),
         collateral: token.address,
         minJoustAmount: minAmountBigInt.toString(),
         endTime: new Date(endDate).toISOString(),
         options,
+        ...(isAiArbiter ? { aiArbiterId: selectedAiArbiter.id } : {}),
       });
 
       const dbPoolId = result.pool.id;
@@ -70,7 +86,7 @@ function CreatePoolForm() {
 
       // Step 2: Deploy to chain via MiniKit
       const txResult = await createPoolOnChain({
-        arbiter: session?.user?.address,
+        arbiter: arbiterAddress,
         arbiterFee: parseInt(arbiterFee),
         collateral: token.address,
         minJoustAmount: minAmountBigInt,
@@ -163,6 +179,15 @@ function CreatePoolForm() {
         throw new Error(err.error ?? "Failed to record deployment");
       }
 
+      // Step 6: Auto-accept arbiter if AI arbiter
+      if (isAiArbiter) {
+        try {
+          await autoAccept.mutateAsync();
+        } catch {
+          // Non-critical — pool is created, agent will accept later
+        }
+      }
+
       setStep("done");
       sendHaptic("success");
       router.push(`/pool/${dbPoolId}`);
@@ -244,6 +269,38 @@ function CreatePoolForm() {
                 </Button>
               )}
             </div>
+          </div>
+
+          {/* Arbiter Selection */}
+          <div>
+            <label className="text-muted-foreground mb-1 block text-sm">Arbiter</label>
+            <div className="mb-2 flex gap-2">
+              <Button
+                type="button"
+                variant={arbiterMode === "self" ? "default" : "secondary"}
+                onClick={() => {
+                  setArbiterMode("self");
+                  setSelectedAiArbiter(null);
+                }}
+                className="flex-1"
+              >
+                Self Arbiter
+              </Button>
+              <Button
+                type="button"
+                variant={arbiterMode === "ai" ? "default" : "secondary"}
+                onClick={() => setArbiterMode("ai")}
+                className="flex-1 bg-violet-600 hover:bg-violet-700"
+              >
+                AI Arbiter
+              </Button>
+            </div>
+            {arbiterMode === "ai" && (
+              <AiArbiterPicker
+                selected={selectedAiArbiter}
+                onSelect={setSelectedAiArbiter}
+              />
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">

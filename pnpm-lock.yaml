@@ -23,6 +23,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.75.0
         version: 5.96.2(react@19.2.4)
+      '@worldcoin/agentkit':
+        specifier: ^0.1.6
+        version: 0.1.6(bufferutil@4.1.0)(ethers@6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@worldcoin/idkit':
         specifier: ^4.0.11
         version: 4.0.11(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -35,6 +38,12 @@ importers:
       '@worldcoin/minikit-react':
         specifier: ^1.7.1
         version: 1.9.14(@types/react@19.2.14)(react@19.2.4)(typescript@5.9.3)(viem@2.47.10(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76))(zod@3.25.76)
+      '@x402/core':
+        specifier: ^2.9.0
+        version: 2.9.0
+      '@x402/evm':
+        specifier: ^2.9.0
+        version: 2.9.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -44,6 +53,9 @@ importers:
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
+      ethers:
+        specifier: ^6.16.0
+        version: 6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       iron-session:
         specifier: ^8.0.4
         version: 8.0.4
@@ -125,6 +137,9 @@ importers:
         version: 8.58.0(eslint@10.2.0(jiti@2.6.1))(typescript@5.9.3)
 
 packages:
+
+  '@adraffy/ens-normalize@1.10.1':
+    resolution: {integrity: sha512-96Z2IP3mYmF1Xg2cDm8f1gWGf/HUVedQ3FMifV4kG/PQ4yEP51xDtRAEfhVNt5f/uzpNkZHwWQuUcu6D6K+Ekw==}
 
   '@adraffy/ens-normalize@1.11.1':
     resolution: {integrity: sha512-nhCBV3quEgesuf7c7KYfperqSS14T8bYuvJ8PcLJp6znkZpFc0AuW4qBtr8eKVyPPe/8RSr7sglCWPU5eaxwKQ==}
@@ -665,6 +680,9 @@ packages:
     resolution: {integrity: sha512-2I0gnIVPtfnMw9ee9h1dJG7tp81+8Ob3OJb3Mv37rx5L40/b0i7djjCVvGOVqc9AEIQyvyu1i6ypKdFw8R8gQw==}
     engines: {node: ^14.21.3 || >=16}
 
+  '@noble/curves@1.2.0':
+    resolution: {integrity: sha512-oYclrNgRaM9SsBUBVbb8M6DTV7ZHRTKugureoYEncY5c65HOmRzvSiTE3y5CYaPYJA/GVkrhXEoF0M3Ya9PMnw==}
+
   '@noble/curves@1.8.0':
     resolution: {integrity: sha512-j84kjAbzEnQHaSIhRPUmB3/eVXu2k3dKPl2LOrR8fSOIL+89U+7lV117EWHtq/GHM3ReGHM46iRBdZfpc4HRUQ==}
     engines: {node: ^14.21.3 || >=16}
@@ -680,6 +698,10 @@ packages:
   '@noble/curves@1.9.7':
     resolution: {integrity: sha512-gbKGcRUYIjA3/zCCNaWDciTMFI0dCkvou3TL8Zmy5Nc7sJ47a0jtOeZoTaMxkuqRo9cRhjOdZJXegxYE5FN/xw==}
     engines: {node: ^14.21.3 || >=16}
+
+  '@noble/hashes@1.3.2':
+    resolution: {integrity: sha512-MVC8EAQp7MvEcm30KWENFjgR+Mkmf+D189XJTkFIlwohU5hcBbn1ZkKq7KVTi2Hme3PMGF390DaL52beVrIihQ==}
+    engines: {node: '>= 16'}
 
   '@noble/hashes@1.4.0':
     resolution: {integrity: sha512-V1JJ1WTRUqHHrOSh597hURcMqVKVGL/ea3kv0gSnEdsEZ0/+VyPghM1lMNGc00z7CIQorSvbKpuJkxvuHbvdbg==}
@@ -1518,6 +1540,21 @@ packages:
     resolution: {integrity: sha512-tlqY9xq5ukxTUZBmoOp+m61cqwQD5pHJtFY3Mn8CA8ps6yghLH/Hw8UPdqg4OLmFW3IFlcXnQNmo/dh8HzXYIQ==}
     engines: {node: '>=18'}
 
+  '@spruceid/siwe-parser@2.1.2':
+    resolution: {integrity: sha512-d/r3S1LwJyMaRAKQ0awmo9whfXeE88Qt00vRj91q5uv5ATtWIQEGJ67Yr5eSZw5zp1/fZCXZYuEckt8lSkereQ==}
+
+  '@stablelib/binary@1.0.1':
+    resolution: {integrity: sha512-ClJWvmL6UBM/wjkvv/7m5VP3GMr9t0osr4yVgLZsLCOz4hGN9gIAFEqnJ0TsSMAN+n840nf2cHZnA5/KFqHC7Q==}
+
+  '@stablelib/int@1.0.1':
+    resolution: {integrity: sha512-byr69X/sDtDiIjIV6m4roLVWnNNlRGzsvxw+agj8CIEazqWGOQp2dTYgQhtyVXV9wpO6WyXRQUzLV/JRNumT2w==}
+
+  '@stablelib/random@1.0.2':
+    resolution: {integrity: sha512-rIsE83Xpb7clHPVRlBj8qNe5L8ISQOzjghYQm/dZ7VaM2KHYwMW5adjQjrzTZCchFnNCNhkwtnOBa9HTMJCI8w==}
+
+  '@stablelib/wipe@1.0.1':
+    resolution: {integrity: sha512-WfqfX/eXGiAd3RJe4VU2snh/ZPwtSjLG4ynQ/vYzvghTh7dHFcI1wl+nrkWG6lGhukOxOsUHfv8dUXr58D0ayg==}
+
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
@@ -1674,6 +1711,9 @@ packages:
 
   '@types/node@22.19.17':
     resolution: {integrity: sha512-wGdMcf+vPYM6jikpS/qhg6WiqSV/OhG+jeeHT/KlVqxYfD40iYJf9/AE1uQxVWFvU7MipKRkRv8NSHiCGgPr8Q==}
+
+  '@types/node@22.7.5':
+    resolution: {integrity: sha512-jML7s2NAzMWc//QSJ1a3prpk78cOPchGvXJsC3C6R6PSMoooztvRVQEz89gmBTBY1SPMaqo5teB4uNHPdetShQ==}
 
   '@types/pg@8.20.0':
     resolution: {integrity: sha512-bEPFOaMAHTEP1EzpvHTbmwR8UsFyHSKsRisLIHVMXnpNefSbGA1bD6CVy+qKjGSqmZqNqBDV2azOBo8TgkcVow==}
@@ -1999,6 +2039,9 @@ packages:
   '@walletconnect/window-metadata@1.0.1':
     resolution: {integrity: sha512-9koTqyGrM2cqFRW517BPY/iEtUDx2r1+Pwwu5m7sJ7ka79wi3EyqhqcICk/yDmv6jAS1rjKgTKXlEhanYjijcA==}
 
+  '@worldcoin/agentkit@0.1.6':
+    resolution: {integrity: sha512-LtFoUb//R6OQ1wke0zYtAWBYkPk3wPGbkiPsaGmJVtym04L9Z3ZJDV6RPkuGSq02/azrvQFFoiUSdjU67ODAZA==}
+
   '@worldcoin/idkit-core@2.1.0':
     resolution: {integrity: sha512-6MOFcOGqpk3iiW1i25NYmRJ6JUO8KetqS5Ic0l2cqnEEKvjMa/NT1+WTuenjTUF//Mqwy5kWgtVBzUqeyEfQ2g==}
     engines: {node: '>=12.4'}
@@ -2053,6 +2096,12 @@ packages:
       react: ^18 || ^19
       viem: ^2.23.5
 
+  '@x402/core@2.9.0':
+    resolution: {integrity: sha512-IqPITHYx6XHlgLPtparuKKwoB+3wQdgt0F+WUH1e3WHMeiWdp+xTtQDy+6yOKuObNFI1S1iVbQFz0GivR/Vv3w==}
+
+  '@x402/evm@2.9.0':
+    resolution: {integrity: sha512-qUhnKe1pym9a+7dzeK+6ripsddVsr+5PNcpQfTYK4dubW+1SR9MRx/O4PNRtedWoAxminqAwmCL5AQUiSVvKWA==}
+
   abitype@1.0.8:
     resolution: {integrity: sha512-ZeiI6h3GnW06uYDLx0etQtX/p8E24UaHHBj57RSjK7YBFe7iuVn07EDpOeP451D06sF27VOz9JJPlIKJmXgkEg==}
     peerDependencies:
@@ -2089,6 +2138,9 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
+  aes-js@4.0.0-beta.5:
+    resolution: {integrity: sha512-G965FqalsNyrPqgEGON7nIx1e/OVENSgiEIzyC63haUMuvNnwIgIjMs52hlTCKhkBny7A2ORNlfY9Zu+jmGk1Q==}
+
   agent-base@7.1.4:
     resolution: {integrity: sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==}
     engines: {node: '>= 14'}
@@ -2122,6 +2174,9 @@ packages:
   anymatch@3.1.3:
     resolution: {integrity: sha512-KMReFUr0B4t+D+OBkjR3KYqvocp2XaSzO55UcB6mgQMd3KbcE+mWTyvVV7D/zsdEbNnV6acZUutkiHQXvTr1Rw==}
     engines: {node: '>= 8'}
+
+  apg-js@4.4.0:
+    resolution: {integrity: sha512-fefmXFknJmtgtNEXfPwZKYkMFX4Fyeyz+fNF6JWp87biGOPslJbCBVU158zvKRZfHBKnJDy8CMM40oLFGkXT8Q==}
 
   argparse@2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
@@ -2785,6 +2840,10 @@ packages:
   etag@1.8.1:
     resolution: {integrity: sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==}
     engines: {node: '>= 0.6'}
+
+  ethers@6.16.0:
+    resolution: {integrity: sha512-U1wulmetNymijEhpSEQ7Ct/P/Jw9/e7R1j5XIbPRydgV2DjLVMsULDlNksq3RQnFgKoLlZf88ijYtWEXcPa07A==}
+    engines: {node: '>=14.0.0'}
 
   eventemitter3@5.0.1:
     resolution: {integrity: sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==}
@@ -4342,6 +4401,11 @@ packages:
   sisteransi@1.0.5:
     resolution: {integrity: sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==}
 
+  siwe@2.3.2:
+    resolution: {integrity: sha512-aSf+6+Latyttbj5nMu6GF3doMfv2UYj83hhwZgUF20ky6fTS83uVhkQABdIVnEuS8y1bBdk7p6ltb9SmlhTTlA==}
+    peerDependencies:
+      ethers: ^5.6.8 || ^6.0.8
+
   sonic-boom@2.8.0:
     resolution: {integrity: sha512-kuonw1YOYYNOve5iHdSahXPOK49GqwA+LZhI6Wz/l0rP57iKyXXIHaRagOBHAPmGwJC6od2Z9zgvZ5loSgMlVg==}
 
@@ -4536,6 +4600,9 @@ packages:
   tslib@1.14.1:
     resolution: {integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==}
 
+  tslib@2.7.0:
+    resolution: {integrity: sha512-gLXCKdN1/j47AiHiOkJN69hJmcbGTHI0ImLmbYLHykhgeN0jVGola9yVjFgzCUklsZQMW55o+dW7IXv3RCXDzA==}
+
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
@@ -4545,6 +4612,9 @@ packages:
 
   tw-animate-css@1.4.0:
     resolution: {integrity: sha512-7bziOlRqH0hJx80h/3mbicLW7o8qLsH5+RaLR2t+OHM3D0JlWGODQKQ4cxbK7WlvmUxpcj6Kgu6EKqjrGFe3QQ==}
+
+  tweetnacl@1.0.3:
+    resolution: {integrity: sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==}
 
   type-check@0.4.0:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
@@ -4598,6 +4668,9 @@ packages:
 
   uncrypto@0.1.3:
     resolution: {integrity: sha512-Ql87qFHB3s/De2ClA9e0gsnS6zXG27SkTiSJwjCc9MebbfapQfuPzumMIUMi38ezPZVNFcHI9sUIepeQfw8J8Q==}
+
+  undici-types@6.19.8:
+    resolution: {integrity: sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw==}
 
   undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
@@ -4733,6 +4806,9 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
+  valid-url@1.0.9:
+    resolution: {integrity: sha512-QQDsV8OnSf5Uc30CKSwG9lnhMPe6exHtTXLRYX8uMwKENy640pU+2BgBL0LRbDh/eYRahNCS7aewCx0wf3NYVA==}
+
   validate-npm-package-name@7.0.2:
     resolution: {integrity: sha512-hVDIBwsRruT73PbK7uP5ebUt+ezEtCmzZz3F59BSr2F6OVFnJ/6h8liuvdLrQ88Xmnk6/+xGGuq+pG9WwTuy3A==}
     engines: {node: ^20.17.0 || >=22.9.0}
@@ -4840,6 +4916,18 @@ packages:
     peerDependencies:
       bufferutil: ^4.0.1
       utf-8-validate: ^5.0.2
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
+  ws@8.17.1:
+    resolution: {integrity: sha512-6XQFvXTkbfUOZOKKILFG1PDK2NDQs4azKQl26T0YS5CxqWLgXajbPZ+h4gZekJyRqFU8pvnbAbbs/3TgRPy+GQ==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
     peerDependenciesMeta:
       bufferutil:
         optional: true
@@ -5006,6 +5094,8 @@ packages:
         optional: true
 
 snapshots:
+
+  '@adraffy/ens-normalize@1.10.1': {}
 
   '@adraffy/ens-normalize@1.11.1': {}
 
@@ -5552,6 +5642,10 @@ snapshots:
 
   '@noble/ciphers@1.3.0': {}
 
+  '@noble/curves@1.2.0':
+    dependencies:
+      '@noble/hashes': 1.3.2
+
   '@noble/curves@1.8.0':
     dependencies:
       '@noble/hashes': 1.7.0
@@ -5569,6 +5663,8 @@ snapshots:
   '@noble/curves@1.9.7':
     dependencies:
       '@noble/hashes': 1.8.0
+
+  '@noble/hashes@1.3.2': {}
 
   '@noble/hashes@1.4.0':
     optional: true
@@ -6709,7 +6805,7 @@ snapshots:
 
   '@scure/bip32@1.7.0':
     dependencies:
-      '@noble/curves': 1.9.1
+      '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
 
@@ -6727,6 +6823,26 @@ snapshots:
   '@sec-ant/readable-stream@0.4.1': {}
 
   '@sindresorhus/merge-streams@4.0.0': {}
+
+  '@spruceid/siwe-parser@2.1.2':
+    dependencies:
+      '@noble/hashes': 1.8.0
+      apg-js: 4.4.0
+      uri-js: 4.4.1
+      valid-url: 1.0.9
+
+  '@stablelib/binary@1.0.1':
+    dependencies:
+      '@stablelib/int': 1.0.1
+
+  '@stablelib/int@1.0.1': {}
+
+  '@stablelib/random@1.0.2':
+    dependencies:
+      '@stablelib/binary': 1.0.1
+      '@stablelib/wipe': 1.0.1
+
+  '@stablelib/wipe@1.0.1': {}
 
   '@standard-schema/spec@1.1.0': {}
 
@@ -6850,6 +6966,10 @@ snapshots:
   '@types/node@22.19.17':
     dependencies:
       undici-types: 6.21.0
+
+  '@types/node@22.7.5':
+    dependencies:
+      undici-types: 6.19.8
 
   '@types/pg@8.20.0':
     dependencies:
@@ -7616,6 +7736,20 @@ snapshots:
       tslib: 1.14.1
     optional: true
 
+  '@worldcoin/agentkit@0.1.6(bufferutil@4.1.0)(ethers@6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(typescript@5.9.3)(utf-8-validate@5.0.10)':
+    dependencies:
+      '@scure/base': 1.2.6
+      '@x402/core': 2.9.0
+      siwe: 2.3.2(ethers@6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))
+      tweetnacl: 1.0.3
+      viem: 2.47.10(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
+      zod: 3.25.76
+    transitivePeerDependencies:
+      - bufferutil
+      - ethers
+      - typescript
+      - utf-8-validate
+
   '@worldcoin/idkit-core@2.1.0(@types/react@19.2.14)(react@19.2.4)(typescript@5.9.3)(zod@3.25.76)':
     dependencies:
       browser-or-node: 3.0.0-pre.0
@@ -7692,6 +7826,20 @@ snapshots:
       - typescript
       - zod
 
+  '@x402/core@2.9.0':
+    dependencies:
+      zod: 3.25.76
+
+  '@x402/evm@2.9.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)':
+    dependencies:
+      '@x402/core': 2.9.0
+      viem: 2.47.10(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
+      zod: 3.25.76
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+
   abitype@1.0.8(typescript@5.9.3)(zod@3.25.76):
     optionalDependencies:
       typescript: 5.9.3
@@ -7726,6 +7874,8 @@ snapshots:
 
   acorn@8.16.0: {}
 
+  aes-js@4.0.0-beta.5: {}
+
   agent-base@7.1.4: {}
 
   ajv-formats@3.0.1(ajv@8.18.0):
@@ -7759,6 +7909,8 @@ snapshots:
       normalize-path: 3.0.0
       picomatch: 2.3.2
     optional: true
+
+  apg-js@4.4.0: {}
 
   argparse@2.0.1: {}
 
@@ -8558,6 +8710,19 @@ snapshots:
   esutils@2.0.3: {}
 
   etag@1.8.1: {}
+
+  ethers@6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10):
+    dependencies:
+      '@adraffy/ens-normalize': 1.10.1
+      '@noble/curves': 1.2.0
+      '@noble/hashes': 1.3.2
+      '@types/node': 22.7.5
+      aes-js: 4.0.0-beta.5
+      tslib: 2.7.0
+      ws: 8.17.1(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
 
   eventemitter3@5.0.1: {}
 
@@ -10271,6 +10436,14 @@ snapshots:
 
   sisteransi@1.0.5: {}
 
+  siwe@2.3.2(ethers@6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)):
+    dependencies:
+      '@spruceid/siwe-parser': 2.1.2
+      '@stablelib/random': 1.0.2
+      ethers: 6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      uri-js: 4.4.1
+      valid-url: 1.0.9
+
   sonic-boom@2.8.0:
     dependencies:
       atomic-sleep: 1.0.0
@@ -10474,6 +10647,8 @@ snapshots:
   tslib@1.14.1:
     optional: true
 
+  tslib@2.7.0: {}
+
   tslib@2.8.1: {}
 
   turbo@2.9.3:
@@ -10486,6 +10661,8 @@ snapshots:
       '@turbo/windows-arm64': 2.9.3
 
   tw-animate-css@1.4.0: {}
+
+  tweetnacl@1.0.3: {}
 
   type-check@0.4.0:
     dependencies:
@@ -10563,6 +10740,8 @@ snapshots:
       which-boxed-primitive: 1.1.1
 
   uncrypto@0.1.3: {}
+
+  undici-types@6.19.8: {}
 
   undici-types@6.21.0: {}
 
@@ -10656,6 +10835,8 @@ snapshots:
     optional: true
 
   util-deprecate@1.0.2: {}
+
+  valid-url@1.0.9: {}
 
   validate-npm-package-name@7.0.2: {}
 
@@ -10830,6 +11011,11 @@ snapshots:
       bufferutil: 4.1.0
       utf-8-validate: 5.0.10
     optional: true
+
+  ws@8.17.1(bufferutil@4.1.0)(utf-8-validate@5.0.10):
+    optionalDependencies:
+      bufferutil: 4.1.0
+      utf-8-validate: 5.0.10
 
   ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@5.0.10):
     optionalDependencies:

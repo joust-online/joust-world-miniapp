@@ -4,6 +4,7 @@ import Link from "next/link";
 import { formatAmount } from "@/lib/utils";
 import { getCollateralInfo } from "@/lib/contracts";
 import { VerificationBadge } from "@/components/verification-badge";
+import { AiArbiterBadge } from "@/components/ai-arbiter-badge";
 import { formatDistanceToNow } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ interface PoolCardProps {
     endTime: string;
     options: { label: string; joustType: number }[];
     creator: { username: string; worldIdLevel?: string };
+    aiArbiter?: { id: number; name: string; category: string } | null;
     _count: { jousts: number };
   };
 }
@@ -64,6 +66,7 @@ export function PoolCard({ pool }: PoolCardProps) {
           <div className="text-muted-foreground mb-2 flex items-center gap-1.5 text-xs">
             <span>by {pool.creator.username}</span>
             <VerificationBadge level={pool.creator.worldIdLevel} />
+            {pool.aiArbiter && <AiArbiterBadge name={pool.aiArbiter.name} size="sm" />}
           </div>
           <div className="text-muted-foreground flex items-center justify-between text-xs">
             <span>
