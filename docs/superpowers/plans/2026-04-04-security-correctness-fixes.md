@@ -13,6 +13,7 @@
 ## File Map
 
 ### New Files
+
 - `src/lib/tx-verify.ts` — Server-side tx receipt verification + event log decoding
 - `src/lib/api-client.ts` — SuperJSON-based API client for client-side fetches
 - `src/lib/api-response.ts` — SuperJSON response helpers for API routes
@@ -24,6 +25,7 @@
 - `src/app/api/upload-token/route.ts` — Presigned URL generation for R2 uploads
 
 ### Modified Files
+
 - `src/app/api/pool/[id]/record-tx/route.ts` — Authorization + tx verification (C1+C2)
 - `src/middleware.ts` — CORS lockdown (C3)
 - `src/lib/notifications.ts` — API key auth for push notifications (C4)
@@ -50,6 +52,7 @@
 ## Task 1: Server-Side Tx Verification Utility
 
 **Files:**
+
 - Create: `src/lib/tx-verify.ts`
 
 This utility is used by both `record-tx` (Task 2) and joust creation (Task 5). Build it first.
@@ -157,11 +160,13 @@ git commit -m "Add server-side tx verification utility + use WORLD_CHAIN_RPC"
 ## Task 2: Authorization & Tx Verification in record-tx (C1+C2)
 
 **Files:**
+
 - Modify: `src/app/api/pool/[id]/record-tx/route.ts`
 
 - [ ] **Step 1: Rewrite record-tx route with authorization + log verification**
 
 Read the current file, then replace the POST handler. Key changes:
+
 1. Authorization check per action
 2. Verify tx receipt via `getVerifiedReceipt`
 3. Decode logs via `decodeContractLogs` + `requireEvent`
@@ -196,7 +201,16 @@ async function notifyAllJousters(
   for (const j of jousts) {
     if (notifiedUserIds.has(j.user.id)) continue;
     notifiedUserIds.add(j.user.id);
-    await notifyUser(prisma, j.user.id, type, title, body, poolId, j.user.address, `/pool/${poolId}`);
+    await notifyUser(
+      prisma,
+      j.user.id,
+      type,
+      title,
+      body,
+      poolId,
+      j.user.address,
+      `/pool/${poolId}`,
+    );
   }
 }
 
@@ -226,11 +240,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     // ── Authorization ──
     if (action === "deploy") {
       if (session.userId !== pool.creatorId) {
-        return NextResponse.json({ error: "Only pool creator can record deployment" }, { status: 403 });
+        return NextResponse.json(
+          { error: "Only pool creator can record deployment" },
+          { status: 403 },
+        );
       }
     } else {
       if (session.address.toLowerCase() !== pool.arbiterAddress.toLowerCase()) {
-        return NextResponse.json({ error: "Only arbiter can perform this action" }, { status: 403 });
+        return NextResponse.json(
+          { error: "Only arbiter can perform this action" },
+          { status: 403 },
+        );
       }
     }
 
@@ -405,6 +425,7 @@ git commit -m "Add authorization + on-chain tx verification to record-tx (C1+C2)
 ## Task 3: Remove Client-Side Viem from Create Page
 
 **Files:**
+
 - Modify: `src/app/create/page.tsx`
 
 The create page currently creates a viem `publicClient` on the client to parse receipts and extract `contractId`. Now `record-tx` does this server-side.
@@ -412,97 +433,99 @@ The create page currently creates a viem `publicClient` on the client to parse r
 - [ ] **Step 1: Simplify create page flow**
 
 Remove these imports from the top of the file:
+
 - `createPublicClient`, `http`, `decodeEventLog` from "viem"
 - `worldchain` from "viem/chains"
 
 Replace the `handleSubmit` function. The new flow is:
+
 1. Create DB pool record
 2. Send chain tx via MiniKit
 3. Poll World API for txHash
 4. Call record-tx with just `{ txHash, action: "deploy" }` — server extracts contractId
 
 ```typescript
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    const token = COLLATERAL_TOKENS[collateral];
-    const minAmountBigInt = BigInt(Math.floor(parseFloat(minAmount) * 10 ** token.decimals));
-    const endTimestamp = Math.floor(new Date(endDate).getTime() / 1000);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError(null);
+  const token = COLLATERAL_TOKENS[collateral];
+  const minAmountBigInt = BigInt(Math.floor(parseFloat(minAmount) * 10 ** token.decimals));
+  const endTimestamp = Math.floor(new Date(endDate).getTime() / 1000);
 
-    try {
-      // Step 1: Create pool record in DB
-      const result = await createPool.mutateAsync({
-        title,
-        description: description || undefined,
-        arbiterAddress: session?.user?.address,
-        arbiterFee: parseInt(arbiterFee),
-        collateral: token.address,
-        minJoustAmount: minAmountBigInt.toString(),
-        endTime: new Date(endDate).toISOString(),
-        options,
-      });
+  try {
+    // Step 1: Create pool record in DB
+    const result = await createPool.mutateAsync({
+      title,
+      description: description || undefined,
+      arbiterAddress: session?.user?.address,
+      arbiterFee: parseInt(arbiterFee),
+      collateral: token.address,
+      minJoustAmount: minAmountBigInt.toString(),
+      endTime: new Date(endDate).toISOString(),
+      options,
+    });
 
-      const dbPoolId = result.pool.id;
-      setPoolId(dbPoolId);
-      setStep("deploying");
+    const dbPoolId = result.pool.id;
+    setPoolId(dbPoolId);
+    setStep("deploying");
 
-      // Step 2: Deploy to chain via MiniKit
-      const txResult = await createPoolOnChain({
-        arbiter: session?.user?.address,
-        arbiterFee: parseInt(arbiterFee),
-        collateral: token.address,
-        minJoustAmount: minAmountBigInt,
-        supportedJoustTypes: options.length,
-        endTime: endTimestamp,
-      });
+    // Step 2: Deploy to chain via MiniKit
+    const txResult = await createPoolOnChain({
+      arbiter: session?.user?.address,
+      arbiterFee: parseInt(arbiterFee),
+      collateral: token.address,
+      minJoustAmount: minAmountBigInt,
+      supportedJoustTypes: options.length,
+      endTime: endTimestamp,
+    });
 
-      const userOpHash = txResult.userOpHash;
-      setStep("recording");
+    const userOpHash = txResult.userOpHash;
+    setStep("recording");
 
-      // Step 3: Poll for user operation to be mined
-      let txHash: string | undefined;
-      for (let i = 0; i < 30; i++) {
-        await new Promise((r) => setTimeout(r, 2000));
-        const statusRes = await fetch(
-          `https://developer.world.org/api/v2/minikit/userop/${userOpHash}`,
-        );
-        if (statusRes.ok) {
-          const status = await statusRes.json();
-          if (status.status === "success" && status.transaction_hash) {
-            txHash = status.transaction_hash;
-            break;
-          }
+    // Step 3: Poll for user operation to be mined
+    let txHash: string | undefined;
+    for (let i = 0; i < 30; i++) {
+      await new Promise((r) => setTimeout(r, 2000));
+      const statusRes = await fetch(
+        `https://developer.world.org/api/v2/minikit/userop/${userOpHash}`,
+      );
+      if (statusRes.ok) {
+        const status = await statusRes.json();
+        if (status.status === "success" && status.transaction_hash) {
+          txHash = status.transaction_hash;
+          break;
         }
       }
-
-      if (!txHash) {
-        throw new Error("Transaction not confirmed after 60s");
-      }
-
-      // Step 4: Record tx — server extracts contractId from logs
-      const recordRes = await fetch(`/api/pool/${dbPoolId}/record-tx`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ txHash, action: "deploy" }),
-      });
-
-      if (!recordRes.ok) {
-        const err = await recordRes.json();
-        throw new Error(err.error ?? "Failed to record deployment");
-      }
-
-      setStep("done");
-      sendHaptic("success");
-      router.push(`/pool/${dbPoolId}`);
-    } catch (err) {
-      console.error("Failed to create pool:", err);
-      setError(err instanceof Error ? err.message : "Something went wrong");
-      sendHaptic("error");
-      if (poolId && step !== "form") {
-        setStep("form");
-      }
     }
-  };
+
+    if (!txHash) {
+      throw new Error("Transaction not confirmed after 60s");
+    }
+
+    // Step 4: Record tx — server extracts contractId from logs
+    const recordRes = await fetch(`/api/pool/${dbPoolId}/record-tx`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ txHash, action: "deploy" }),
+    });
+
+    if (!recordRes.ok) {
+      const err = await recordRes.json();
+      throw new Error(err.error ?? "Failed to record deployment");
+    }
+
+    setStep("done");
+    sendHaptic("success");
+    router.push(`/pool/${dbPoolId}`);
+  } catch (err) {
+    console.error("Failed to create pool:", err);
+    setError(err instanceof Error ? err.message : "Something went wrong");
+    sendHaptic("error");
+    if (poolId && step !== "form") {
+      setStep("form");
+    }
+  }
+};
 ```
 
 Also remove the unused `WorldIdGate` import if still present, and remove the `viem` and `worldchain` imports.
@@ -529,6 +552,7 @@ git commit -m "Remove client-side viem from create page — server extracts cont
 ## Task 4: CORS Lockdown (C3)
 
 **Files:**
+
 - Modify: `src/middleware.ts`
 - Modify: `.env.example`
 
@@ -580,6 +604,7 @@ export const config = {
 - [ ] **Step 2: Add ALLOWED_ORIGINS to .env.example**
 
 Add this line to `.env.example`:
+
 ```
 # CORS
 ALLOWED_ORIGINS="http://localhost:3000,https://your-app.vercel.app,https://*.ngrok-free.app"
@@ -601,6 +626,7 @@ git commit -m "CORS lockdown — restrict API access to allowed origins (C3)"
 ## Task 5: Joust Tx Verification + Validation (C6, W6, W7)
 
 **Files:**
+
 - Modify: `src/app/api/joust/route.ts`
 
 - [ ] **Step 1: Rewrite joust POST handler with tx verification and joustType validation**
@@ -766,11 +792,13 @@ git commit -m "Add on-chain tx verification + joustType validation to joust crea
 ## Task 6: Fix Pool State Enum Usage (W1, W10) + Settle from Active/Expired (W8)
 
 **Files:**
+
 - Modify: `src/app/pool/[id]/page.tsx`
 
 - [ ] **Step 1: Import PoolState and fix all state string comparisons**
 
 At the top of the file, add:
+
 ```typescript
 import { PoolState } from "@prisma/client";
 ```
@@ -778,6 +806,7 @@ import { PoolState } from "@prisma/client";
 Then replace all pool state string literals. The key fixes:
 
 1. `LIFECYCLE_STAGES` — change `"PENDING"` to `PoolState.PENDING_ARBITER`:
+
 ```typescript
 const LIFECYCLE_STAGES = [
   PoolState.PENDING_ARBITER,
@@ -788,6 +817,7 @@ const LIFECYCLE_STAGES = [
 ```
 
 2. `getPoolStatusDisplay` — use enum values:
+
 ```typescript
 function getPoolStatusDisplay(
   state: string,
@@ -805,16 +835,19 @@ function getPoolStatusDisplay(
 ```
 
 3. `PoolLifecycleBar` — fix refund check:
+
 ```typescript
 const isRefunded = state === PoolState.REFUNDED;
 ```
 
 4. Fix `isActive`:
+
 ```typescript
 const isActive = pool.state === PoolState.ACTIVE && !expired;
 ```
 
 5. Fix arbiter action conditions:
+
 ```typescript
 const canAcceptArbiter =
   isArbiter && !pool.arbiterAccepted && pool.state === PoolState.PENDING_ARBITER;
@@ -831,6 +864,7 @@ const canRefundPool =
 ```
 
 6. Fix settled check for winner display and honor vote:
+
 ```typescript
 // In options map:
 const isWinner = pool.state === PoolState.SETTLED && opt.joustType === pool.winningJoustType;
@@ -842,6 +876,7 @@ const isWinner = pool.state === PoolState.SETTLED && opt.joustType === pool.winn
 - [ ] **Step 2: Also fix state refs in other files that use pool state strings**
 
 In `src/components/pool-card.tsx`, add import and update:
+
 ```typescript
 import { PoolState } from "@prisma/client";
 
@@ -852,6 +887,7 @@ if (state === PoolState.REFUNDED) return { text: "Refunded", color: "text-muted-
 ```
 
 In `src/app/page.tsx`, update the joust status check:
+
 ```typescript
 import { PoolState } from "@prisma/client";
 // ...
@@ -859,6 +895,7 @@ const isSettled = pool?.state === PoolState.SETTLED;
 ```
 
 In `src/app/api/pool/route.ts`, update the filter:
+
 ```typescript
 import { PoolState } from "@prisma/client";
 // ...
@@ -866,6 +903,7 @@ const terminal = pool.state === PoolState.SETTLED || pool.state === PoolState.RE
 ```
 
 In `src/app/api/honor/route.ts`:
+
 ```typescript
 import { PoolState } from "@prisma/client";
 // ...
@@ -888,6 +926,7 @@ git commit -m "Use Prisma PoolState enum everywhere + allow settle from active/e
 ## Task 7: Address Normalization + Joust Limits Fix (W2)
 
 **Files:**
+
 - Modify: `src/lib/world-id.ts`
 
 - [ ] **Step 1: Normalize JOUST_LIMITS_BY_COLLATERAL keys to lowercase**
@@ -917,6 +956,7 @@ git commit -m "Normalize collateral address keys to lowercase — fixes device j
 ## Task 8: Prisma Schema Changes (W3, W5)
 
 **Files:**
+
 - Modify: `prisma/schema.prisma`
 
 - [ ] **Step 1: Update schema**
@@ -924,6 +964,7 @@ git commit -m "Normalize collateral address keys to lowercase — fixes device j
 Two changes:
 
 1. Change `HonorScore.score` from `Float` to `Int`:
+
 ```prisma
 model HonorScore {
   arbiterId      Int   @id
@@ -941,6 +982,7 @@ model HonorScore {
 ```
 
 2. Add `deployTxHash` to Pool for retry tracking:
+
 ```prisma
 model Pool {
   // ... existing fields ...
@@ -960,6 +1002,7 @@ Note: This requires `DATABASE_URL` to be set. If not available, run `npx prisma 
 - [ ] **Step 3: Fix `.toFixed()` calls on honor score display**
 
 In `src/app/leaderboard/page.tsx`, change:
+
 ```typescript
 // Before:
 <span className="text-sm font-semibold text-accent">{item.score.toFixed(1)}</span>
@@ -968,11 +1011,16 @@ In `src/app/leaderboard/page.tsx`, change:
 ```
 
 In `src/app/profile/page.tsx`, change:
+
 ```typescript
 // Before:
-Score: {user.honorScore.score.toFixed(1)}
+Score: {
+  user.honorScore.score.toFixed(1);
+}
 // After:
-Score: {user.honorScore.score}
+Score: {
+  user.honorScore.score;
+}
 ```
 
 - [ ] **Step 4: Verify typecheck passes**
@@ -991,6 +1039,7 @@ git commit -m "HonorScore.score to Int + add deployTxHash for retry tracking (W3
 ## Task 9: Token Formatting Helpers (I8) + Fix Raw BigInt Display
 
 **Files:**
+
 - Create: `src/lib/token-utils.ts`
 - Modify: `src/lib/utils.ts`
 - Modify: `src/app/page.tsx`
@@ -1083,6 +1132,7 @@ import { formatTokenAmount } from "@/lib/token-utils";
 ```
 
 Then in the joust rendering section (around line 109), change:
+
 ```typescript
 // Before:
 <span>{joust.amount} staked</span>
@@ -1109,6 +1159,7 @@ git commit -m "Add formatTokenAmount/parseTokenAmount helpers + fix raw BigInt d
 ## Task 10: ETH Price Caching (I4) + Eruda Flag (I9) + Provider Fix (I2)
 
 **Files:**
+
 - Modify: `src/hooks/use-eth-price.ts`
 - Modify: `src/components/eruda.tsx`
 - Modify: `src/components/dev-info.tsx`
@@ -1204,6 +1255,7 @@ export function Providers({ children }: { children: ReactNode }) {
 - [ ] **Step 5: Add NEXT_PUBLIC_ENABLE_ERUDA to .env.example**
 
 Add:
+
 ```
 # Debug
 NEXT_PUBLIC_ENABLE_ERUDA="true"
@@ -1225,6 +1277,7 @@ git commit -m "ETH price caching + Eruda env flag + fix QueryClient instantiatio
 ## Task 11: Notification Auth Check (C4)
 
 **Files:**
+
 - Modify: `src/lib/notifications.ts`
 - Modify: `.env.example`
 
@@ -1326,6 +1379,7 @@ git commit -m "Add API key auth for push notifications + server-only WORLD_APP_I
 ## Task 12: R2 Image Upload (C5)
 
 **Files:**
+
 - Create: `src/lib/r2.ts`
 - Create: `src/lib/image-urls.ts`
 - Create: `src/app/api/upload-token/route.ts`
@@ -1479,6 +1533,7 @@ onChange={async (e) => {
 ```
 
 Also update the image display to use `getPfpUrl`:
+
 ```typescript
 import { getPfpUrl } from "@/lib/image-urls";
 
@@ -1516,6 +1571,7 @@ git commit -m "R2 image upload for profile pictures — remove data URL storage 
 ## Task 13: Remove BigInt.prototype.toJSON Hack + SuperJSON Foundation (I1, I3)
 
 **Files:**
+
 - Create: `src/lib/api-response.ts`
 - Create: `src/lib/api-client.ts`
 - Modify: `src/app/layout.tsx`
@@ -1610,7 +1666,10 @@ class ApiClient {
     }
   }
 
-  async get<T>(endpoint: string, params?: Record<string, string | number | boolean | undefined>): Promise<T> {
+  async get<T>(
+    endpoint: string,
+    params?: Record<string, string | number | boolean | undefined>,
+  ): Promise<T> {
     let url = endpoint;
     if (params) {
       const searchParams = new URLSearchParams();
@@ -1644,6 +1703,7 @@ export const apiClient = new ApiClient();
 - [ ] **Step 4: Remove BigInt.prototype.toJSON hack from layout.tsx**
 
 In `src/app/layout.tsx`, remove these lines from the top of the file:
+
 ```typescript
 // Remove this:
 (BigInt.prototype as any).toJSON = function () {
@@ -1667,6 +1727,7 @@ git commit -m "Add SuperJSON api-client + api-response, remove BigInt.prototype.
 ## Task 14: Solidity Documentation (S1, S2, S3)
 
 **Files:**
+
 - Modify: `contracts/src/JoustArena.sol`
 
 - [ ] **Step 1: Add production safety comments to rescuePool**

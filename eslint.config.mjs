@@ -11,7 +11,7 @@ export default tseslint.config(
       "abis/",
       "prisma/migrations/",
       "next-env.d.ts",
-      "generated/"
+      "generated/",
     ],
   },
   js.configs.recommended,

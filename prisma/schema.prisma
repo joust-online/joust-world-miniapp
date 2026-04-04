@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  output = "../generated/prisma"
+  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -10,55 +10,55 @@ datasource db {
 }
 
 model User {
-  id              Int      @id @default(autoincrement())
-  username        String   @unique @db.VarChar(50)
-  address         String   @unique @db.VarChar(42)
-  pfp             String?  @db.Text
-  worldIdVerified Boolean  @default(false)
-  worldIdLevel    String?  @db.VarChar(10) // "orb" or "device"
-  totalPoints     Int      @default(0)
+  id              Int     @id @default(autoincrement())
+  username        String  @unique @db.VarChar(50)
+  address         String  @unique @db.VarChar(42)
+  pfp             String? @db.Text
+  worldIdVerified Boolean @default(false)
+  worldIdLevel    String? @db.VarChar(10) // "orb" or "device"
+  totalPoints     Int     @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  createdPools    Pool[]    @relation("Creator")
-  arbitratedPools Pool[]    @relation("Arbiter")
-  jousts          Joust[]
-  notifications   Notification[]
-  votesCast       HonorVote[]  @relation("Voter")
-  votesReceived   HonorVote[]  @relation("ArbiterHonor")
-  honorScore      HonorScore?  @relation("UserHonorScore")
+  createdPools         Pool[]                @relation("Creator")
+  arbitratedPools      Pool[]                @relation("Arbiter")
+  jousts               Joust[]
+  notifications        Notification[]
+  votesCast            HonorVote[]           @relation("Voter")
+  votesReceived        HonorVote[]           @relation("ArbiterHonor")
+  honorScore           HonorScore?           @relation("UserHonorScore")
   worldIdVerifications WorldIdVerification[]
 
   @@index([address])
 }
 
 model Pool {
-  id                 String    @id @default(uuid(7)) @db.Uuid
-  contractId         BigInt?
-  title              String    @db.VarChar(200)
-  description        String?   @db.VarChar(2000)
-  image              String?   @db.VarChar(255)
-  creatorId          Int
-  creator            User      @relation("Creator", fields: [creatorId], references: [id])
-  arbiterId          Int?
-  arbiter            User?     @relation("Arbiter", fields: [arbiterId], references: [id])
-  arbiterAddress     String    @db.VarChar(42)
-  arbiterAccepted    Boolean   @default(false)
-  arbiterFee         Int       @db.SmallInt
-  collateral         String    @db.VarChar(42)
-  minJoustAmount     BigInt
-  totalAmountJousted BigInt    @default(0)
-  supportedJoustTypes Int      @db.SmallInt @default(2)
-  winningJoustType   Int       @default(0) @db.SmallInt
-  state              PoolState @default(PENDING_ARBITER)
-  endTime            DateTime
-  contractEndTime    Int       @default(0)
-  deployTxHash       String?   @db.VarChar(66)
-  deployedAt         DateTime?
-  closedAt           DateTime?
-  settledAt          DateTime?
-  refundedAt         DateTime?
+  id                  String    @id @default(uuid(7)) @db.Uuid
+  contractId          BigInt?
+  title               String    @db.VarChar(200)
+  description         String?   @db.VarChar(2000)
+  image               String?   @db.VarChar(255)
+  creatorId           Int
+  creator             User      @relation("Creator", fields: [creatorId], references: [id])
+  arbiterId           Int?
+  arbiter             User?     @relation("Arbiter", fields: [arbiterId], references: [id])
+  arbiterAddress      String    @db.VarChar(42)
+  arbiterAccepted     Boolean   @default(false)
+  arbiterFee          Int       @db.SmallInt
+  collateral          String    @db.VarChar(42)
+  minJoustAmount      BigInt
+  totalAmountJousted  BigInt    @default(0)
+  supportedJoustTypes Int       @default(2) @db.SmallInt
+  winningJoustType    Int       @default(0) @db.SmallInt
+  state               PoolState @default(PENDING_ARBITER)
+  endTime             DateTime
+  contractEndTime     Int       @default(0)
+  deployTxHash        String?   @db.VarChar(66)
+  deployedAt          DateTime?
+  closedAt            DateTime?
+  settledAt           DateTime?
+  refundedAt          DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -150,11 +150,11 @@ enum NotificationType {
 }
 
 model HonorVote {
-  id          Int           @id @default(autoincrement())
-  voterId     Int
-  arbiterId   Int
-  poolId      String        @db.Uuid
-  voteType    HonorVoteType
+  id        Int           @id @default(autoincrement())
+  voterId   Int
+  arbiterId Int
+  poolId    String        @db.Uuid
+  voteType  HonorVoteType
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -174,10 +174,10 @@ enum HonorVoteType {
 }
 
 model HonorScore {
-  arbiterId      Int   @id
-  totalUpvotes   Int   @default(0)
-  totalDownvotes Int   @default(0)
-  score          Int   @default(0)
+  arbiterId      Int @id
+  totalUpvotes   Int @default(0)
+  totalDownvotes Int @default(0)
+  score          Int @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -188,12 +188,12 @@ model HonorScore {
 }
 
 model WorldIdVerification {
-  id                Int      @id @default(autoincrement())
+  id                Int    @id @default(autoincrement())
   userId            Int
-  user              User     @relation(fields: [userId], references: [id])
-  action            String   // "verify-identity", "create-pool", "honor-vote"
-  nullifierHash     String   @unique @db.VarChar(68)
-  verificationLevel String   // "orb" or "device"
+  user              User   @relation(fields: [userId], references: [id])
+  action            String // "verify-identity", "create-pool", "honor-vote"
+  nullifierHash     String @unique @db.VarChar(68)
+  verificationLevel String // "orb" or "device"
 
   createdAt DateTime @default(now())
 

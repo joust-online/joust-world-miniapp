@@ -56,10 +56,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Eruda />
         <SplashBackground />
         <Providers>
-          {/* <VerificationWall> */}
-          {children}
-          <DevInfo />
-          {/* </VerificationWall> */}
+          <VerificationWall>
+            {children}
+            <DevInfo />
+          </VerificationWall>
         </Providers>
       </body>
     </html>
