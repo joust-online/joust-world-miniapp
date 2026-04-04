@@ -6,7 +6,7 @@ import { IDKit, orbLegacy } from "@worldcoin/idkit-core";
 import { useQueryClient } from "@tanstack/react-query";
 
 const APP_ID = process.env.NEXT_PUBLIC_APP_ID!;
-const RP_ID = process.env.NEXT_PUBLIC_RP_ID || "rp_ad88363f9e1150a2";
+const RP_ID = process.env.NEXT_PUBLIC_RP_ID!;
 
 interface WorldIdGateProps {
   level: "device" | "orb";

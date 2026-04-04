@@ -47,9 +47,8 @@ export function useTransaction() {
           }
         }
 
-        // Timeout — still return the userOpHash
-        setStatus("success");
-        return userOpHash;
+        // Timeout — report error
+        throw new Error("Transaction not confirmed after 60s");
       } catch (err) {
         const message = err instanceof Error ? err.message : "Transaction failed";
         setError(message);

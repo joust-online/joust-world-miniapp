@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
-import { requireWorldId, JOUST_LIMITS } from "@/lib/world-id";
+import { requireWorldId, getDeviceJoustLimit } from "@/lib/world-id";
 import { notifyUser } from "@/lib/notifications";
 
 const createJoustSchema = z.object({
@@ -51,17 +51,6 @@ export async function POST(req: NextRequest) {
     const data = parsed.data;
     const amount = BigInt(data.amount);
 
-    // Device-level users limited to 1 USDC per joust
-    if (session.worldIdLevel !== "orb") {
-      const limit = JOUST_LIMITS.device.maxAmount;
-      if (amount > limit) {
-        return NextResponse.json(
-          { error: "Device-verified users limited to 1 USDC per joust. Verify with Orb for unlimited." },
-          { status: 403 }
-        );
-      }
-    }
-
     // Verify pool exists and is active
     const pool = await prisma.pool.findUnique({ where: { id: data.poolId } });
     if (!pool) {
@@ -69,6 +58,17 @@ export async function POST(req: NextRequest) {
     }
     if (pool.state !== "ACTIVE") {
       return NextResponse.json({ error: "Pool is not active" }, { status: 400 });
+    }
+
+    // Device-level users have per-collateral limits
+    if (session.worldIdLevel !== "orb") {
+      const limit = getDeviceJoustLimit(pool.collateral);
+      if (limit && amount > limit) {
+        return NextResponse.json(
+          { error: "Device-verified users have limited stakes. Verify with Orb for unlimited." },
+          { status: 403 }
+        );
+      }
     }
 
     const joust = await prisma.joust.create({

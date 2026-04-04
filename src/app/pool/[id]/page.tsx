@@ -200,7 +200,7 @@ export default function PoolDetailPage() {
   const handleAcceptArbiter = async () => {
     if (contractId == null) return;
     const hash = await arbiterTx.execute(async () => {
-      return sendTransaction("acceptArbiterDelegation", [contractId.toString()]);
+      return sendTransaction("acceptArbiterDelegation", [contractId]);
     });
     if (hash) {
       await recordTx.mutateAsync({ txHash: hash, action: "accept-arbiter" });
@@ -212,7 +212,7 @@ export default function PoolDetailPage() {
   const handleClosePool = async () => {
     if (contractId == null) return;
     const hash = await arbiterTx.execute(async () => {
-      return sendTransaction("closePool", [contractId.toString()]);
+      return sendTransaction("closePool", [contractId]);
     });
     if (hash) {
       await recordTx.mutateAsync({ txHash: hash, action: "close" });
@@ -225,7 +225,7 @@ export default function PoolDetailPage() {
     if (contractId == null || settleOption == null) return;
     const hash = await arbiterTx.execute(async () => {
       return sendTransaction("settlePoolAndPayout", [
-        contractId.toString(),
+        contractId,
         settleOption,
       ]);
     });
@@ -245,7 +245,7 @@ export default function PoolDetailPage() {
   const handleRefundPool = async () => {
     if (contractId == null) return;
     const hash = await arbiterTx.execute(async () => {
-      return sendTransaction("refundPool", [contractId.toString()]);
+      return sendTransaction("refundPool", [contractId]);
     });
     if (hash) {
       await recordTx.mutateAsync({ txHash: hash, action: "refund" });
