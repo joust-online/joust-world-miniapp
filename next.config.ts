@@ -5,6 +5,27 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [{ protocol: "https", hostname: "**.world.org" }],
   },
+  experimental: {
+    optimizePackageImports: ["motion/react", "ogl", "lucide-react"],
+  },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.optimization.splitChunks.cacheGroups = {
+        ...config.optimization.splitChunks.cacheGroups,
+        webgl: {
+          priority: 30,
+          name: "webgl",
+          test: /[\\/]node_modules[\\/](ogl|three)[\\/]/,
+          chunks: "async" as const,
+        },
+      };
+    }
+    config.module.rules.push({
+      test: /\.glsl$/,
+      type: "asset/source",
+    });
+    return config;
+  },
   async headers() {
     return [
       {
