@@ -38,7 +38,7 @@ export function VerificationWall({ children }: { children: React.ReactNode }) {
 
       const result = await MiniKit.walletAuth({
         nonce,
-        statement: "Sign in to Joust — prediction markets powered by World ID",
+        statement: "Sign in to Joust — hypersocial media powered by World ID",
         expirationTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       });
 
@@ -70,9 +70,9 @@ export function VerificationWall({ children }: { children: React.ReactNode }) {
         ⚔️
       </div>
       <h1 className="text-3xl font-bold mb-2">Joust</h1>
-      <p className="text-lg text-muted-foreground mb-1">Prediction Markets</p>
+      <p className="text-lg text-muted-foreground mb-1">Hypersocial Media</p>
       <p className="text-sm text-muted-foreground mb-8 max-w-xs">
-        Stake your conviction on real-world outcomes. Arbitrated by verified humans. Powered by World ID.
+        Put your reputation on the line. Stake convictions, challenge friends, and prove you know what's up.
       </p>
       <div className="space-y-3 max-w-xs w-full mb-8">
         <div className="flex items-center gap-3 text-left">

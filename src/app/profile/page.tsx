@@ -201,7 +201,7 @@ export default function ProfilePage() {
             ) : (
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  Verify with World ID to prove you are a unique human. Unlock full prediction features and build trust as an arbiter.
+                  Verify with World ID to prove you are a unique human. Build trust as an arbiter and unlock the full Joust experience.
                 </p>
                 {verifyError && (
                   <p className="text-xs text-destructive">{verifyError}</p>
