@@ -14,36 +14,32 @@ export function AuthButton({ large }: { large?: boolean }) {
   const handleSignIn = async () => {
     setLoading(true);
     try {
-      // Get nonce
       const nonceRes = await fetch("/api/auth/nonce");
       const { nonce } = await nonceRes.json();
 
-      // Request wallet auth via MiniKit
-      const result = await MiniKit.commandsAsync.walletAuth({
+      const result = await MiniKit.walletAuth({
         nonce,
         statement: "Sign in to Joust",
         expirationTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       });
 
-      if (result.finalPayload.status === "error") {
-        throw new Error("Wallet auth failed");
+      if (result.executedWith === "fallback") {
+        throw new Error("Wallet auth not available");
       }
 
-      // Send to server
       const res = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ payload: result.finalPayload, nonce }),
+        body: JSON.stringify({ payload: result.data, nonce }),
       });
 
       if (res.ok) {
         queryClient.invalidateQueries({ queryKey: ["session"] });
         queryClient.invalidateQueries({ queryKey: ["profile"] });
 
-        // Request notification permission after successful auth
         if (MiniKit.isInstalled()) {
           try {
-            await MiniKit.commandsAsync.requestPermission({ permission: "notifications" as any });
+            await MiniKit.requestPermission({ permission: "notifications" });
           } catch {}
         }
       }
