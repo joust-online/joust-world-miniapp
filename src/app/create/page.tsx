@@ -75,7 +75,7 @@ function CreatePoolForm() {
       for (let i = 0; i < 30; i++) {
         await new Promise((r) => setTimeout(r, 2000));
         const statusRes = await fetch(
-          `https://developer.world.org/api/v2/minikit/userop/${userOpHash}`
+          `https://developer.world.org/api/v2/minikit/userop/${userOpHash}`,
         );
         if (statusRes.ok) {
           const status = await statusRes.json();
@@ -107,12 +107,17 @@ function CreatePoolForm() {
               data: log.data,
               topics: log.topics,
             });
-            if (decoded.eventName === "PoolCreated" || decoded.eventName === "PoolCreationPending") {
+            if (
+              decoded.eventName === "PoolCreated" ||
+              decoded.eventName === "PoolCreationPending"
+            ) {
               contractId = Number((decoded.args as any).id);
               found = true;
               break;
             }
-          } catch {}
+          } catch {
+              // Non-target log, skip
+            }
         }
         if (!found) {
           const counter = await client.readContract({
@@ -179,28 +184,28 @@ function CreatePoolForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="text-sm text-muted-foreground block mb-1">Title</label>
+        <label className="text-muted-foreground mb-1 block text-sm">Title</label>
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Will ETH hit $5k by July?"
           required
-          className="w-full bg-muted rounded-lg px-3 py-2.5 text-sm border border-border focus:border-accent outline-none"
+          className="bg-muted border-border focus:border-accent w-full rounded-lg border px-3 py-2.5 text-sm outline-none"
         />
       </div>
 
       <div>
-        <label className="text-sm text-muted-foreground block mb-1">Description (optional)</label>
+        <label className="text-muted-foreground mb-1 block text-sm">Description (optional)</label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={2}
-          className="w-full bg-muted rounded-lg px-3 py-2.5 text-sm border border-border focus:border-accent outline-none resize-none"
+          className="bg-muted border-border focus:border-accent w-full resize-none rounded-lg border px-3 py-2.5 text-sm outline-none"
         />
       </div>
 
       <div>
-        <label className="text-sm text-muted-foreground block mb-1">Options</label>
+        <label className="text-muted-foreground mb-1 block text-sm">Options</label>
         <div className="space-y-2">
           {options.map((opt, i) => (
             <input
@@ -213,11 +218,11 @@ function CreatePoolForm() {
               }}
               placeholder={`Option ${i + 1}`}
               required
-              className="w-full bg-muted rounded-lg px-3 py-2.5 text-sm border border-border focus:border-accent outline-none"
+              className="bg-muted border-border focus:border-accent w-full rounded-lg border px-3 py-2.5 text-sm outline-none"
             />
           ))}
           {options.length < 6 && (
-            <button type="button" onClick={addOption} className="text-xs text-accent">
+            <button type="button" onClick={addOption} className="text-accent text-xs">
               + Add option
             </button>
           )}
@@ -226,29 +231,31 @@ function CreatePoolForm() {
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-sm text-muted-foreground block mb-1">Collateral</label>
+          <label className="text-muted-foreground mb-1 block text-sm">Collateral</label>
           <select
             value={collateral}
             onChange={(e) => setCollateral(e.target.value)}
-            className="w-full bg-muted rounded-lg px-3 py-2.5 text-sm border border-border outline-none"
+            className="bg-muted border-border w-full rounded-lg border px-3 py-2.5 text-sm outline-none"
           >
             {Object.entries(COLLATERAL_TOKENS).map(([key, t]) => (
-              <option key={key} value={key}>{t.symbol}</option>
+              <option key={key} value={key}>
+                {t.symbol}
+              </option>
             ))}
           </select>
         </div>
         <div>
-          <label className="text-sm text-muted-foreground block mb-1">Min Stake</label>
+          <label className="text-muted-foreground mb-1 block text-sm">Min Stake</label>
           <input
             type="number"
             step="any"
             value={minAmount}
             onChange={(e) => setMinAmount(e.target.value)}
             required
-            className="w-full bg-muted rounded-lg px-3 py-2.5 text-sm border border-border focus:border-accent outline-none"
+            className="bg-muted border-border focus:border-accent w-full rounded-lg border px-3 py-2.5 text-sm outline-none"
           />
           {ethPrice && parseFloat(minAmount) > 0 && (
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-muted-foreground mt-1 text-xs">
               ≈ ${(parseFloat(minAmount) * ethPrice).toFixed(2)} USD
             </p>
           )}
@@ -257,7 +264,7 @@ function CreatePoolForm() {
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-sm text-muted-foreground block mb-1">Arbiter Fee (bps)</label>
+          <label className="text-muted-foreground mb-1 block text-sm">Arbiter Fee (bps)</label>
           <input
             type="number"
             value={arbiterFee}
@@ -265,23 +272,23 @@ function CreatePoolForm() {
             min="0"
             max="200"
             required
-            className="w-full bg-muted rounded-lg px-3 py-2.5 text-sm border border-border focus:border-accent outline-none"
+            className="bg-muted border-border focus:border-accent w-full rounded-lg border px-3 py-2.5 text-sm outline-none"
           />
         </div>
         <div>
-          <label className="text-sm text-muted-foreground block mb-1">End Date</label>
+          <label className="text-muted-foreground mb-1 block text-sm">End Date</label>
           <input
             type="datetime-local"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
             required
-            className="w-full bg-muted rounded-lg px-3 py-2.5 text-sm border border-border focus:border-accent outline-none"
+            className="bg-muted border-border focus:border-accent w-full rounded-lg border px-3 py-2.5 text-sm outline-none"
           />
         </div>
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-3 py-2">
+        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
           {error}
         </div>
       )}
@@ -289,7 +296,7 @@ function CreatePoolForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full py-3 bg-accent text-white rounded-xl font-semibold disabled:opacity-50"
+        className="bg-accent w-full rounded-xl py-3 font-semibold text-white disabled:opacity-50"
       >
         {buttonLabel}
       </button>
@@ -299,8 +306,8 @@ function CreatePoolForm() {
 
 export default function CreatePage() {
   return (
-    <main className="pb-20 px-4 pt-4">
-      <h1 className="text-xl font-bold mb-4">Create Pool</h1>
+    <main className="px-4 pt-4 pb-20">
+      <h1 className="mb-4 text-xl font-bold">Create Pool</h1>
       <CreatePoolForm />
       <TabNavigation />
     </main>

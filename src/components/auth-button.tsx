@@ -40,7 +40,9 @@ export function AuthButton({ large }: { large?: boolean }) {
         if (MiniKit.isInstalled()) {
           try {
             await MiniKit.requestPermission({ permission: "notifications" as any });
-          } catch {}
+          } catch {
+            // Notification permission is optional
+          }
         }
       }
     } catch (err) {
@@ -54,7 +56,9 @@ export function AuthButton({ large }: { large?: boolean }) {
     return (
       <div className="flex items-center gap-2">
         {session.user.worldIdLevel === "orb" && <span className="text-xs">🔮</span>}
-        <span className="text-sm text-muted-foreground">{session.user.username || shortenAddress(session.user.address)}</span>
+        <span className="text-muted-foreground text-sm">
+          {session.user.username || shortenAddress(session.user.address)}
+        </span>
       </div>
     );
   }
@@ -63,7 +67,7 @@ export function AuthButton({ large }: { large?: boolean }) {
     <button
       onClick={handleSignIn}
       disabled={loading}
-      className={`bg-accent text-white font-medium rounded-full disabled:opacity-50 ${
+      className={`bg-accent rounded-full font-medium text-white disabled:opacity-50 ${
         large ? "px-8 py-3 text-base" : "px-4 py-2 text-sm"
       }`}
     >

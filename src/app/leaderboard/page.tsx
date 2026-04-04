@@ -18,13 +18,13 @@ export default function LeaderboardPage() {
   });
 
   return (
-    <main className="pb-20 px-4 pt-4">
-      <h1 className="text-xl font-bold mb-4">Leaderboard</h1>
+    <main className="px-4 pt-4 pb-20">
+      <h1 className="mb-4 text-xl font-bold">Leaderboard</h1>
 
-      <div className="flex gap-2 mb-4">
+      <div className="mb-4 flex gap-2">
         <button
           onClick={() => setTab("arbiters")}
-          className={`flex-1 py-2 rounded-xl text-sm font-medium ${
+          className={`flex-1 rounded-xl py-2 text-sm font-medium ${
             tab === "arbiters" ? "bg-accent text-white" : "bg-muted text-muted-foreground"
           }`}
         >
@@ -32,7 +32,7 @@ export default function LeaderboardPage() {
         </button>
         <button
           onClick={() => setTab("jousters")}
-          className={`flex-1 py-2 rounded-xl text-sm font-medium ${
+          className={`flex-1 rounded-xl py-2 text-sm font-medium ${
             tab === "jousters" ? "bg-accent text-white" : "bg-muted text-muted-foreground"
           }`}
         >
@@ -41,54 +41,62 @@ export default function LeaderboardPage() {
       </div>
 
       {isLoading ? (
-        <div className="text-center py-8 text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground py-8 text-center">Loading...</div>
       ) : tab === "arbiters" ? (
         <div className="space-y-2">
           {data?.topArbiters?.map((item: any, i: number) => (
-            <div key={item.arbiterId} className="flex items-center gap-3 bg-card rounded-xl border border-border p-3">
-              <span className="text-lg font-bold text-muted-foreground w-6 text-center">
+            <div
+              key={item.arbiterId}
+              className="bg-card border-border flex items-center gap-3 rounded-xl border p-3"
+            >
+              <span className="text-muted-foreground w-6 text-center text-lg font-bold">
                 {i + 1}
               </span>
-              <div className="flex-1 min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-sm font-medium truncate">
+                  <span className="truncate text-sm font-medium">
                     {item.arbiter?.username ?? shortenAddress(item.arbiter?.address ?? "")}
                   </span>
                   <VerificationBadge level={item.arbiter?.worldIdLevel} />
                 </div>
-                <div className="flex gap-3 text-xs text-muted-foreground mt-0.5">
+                <div className="text-muted-foreground mt-0.5 flex gap-3 text-xs">
                   <span className="text-green-400">+{item.totalUpvotes}</span>
                   <span className="text-red-400">-{item.totalDownvotes}</span>
                 </div>
               </div>
-              <span className="text-sm font-semibold text-accent">{item.score.toFixed(1)}</span>
+              <span className="text-accent text-sm font-semibold">{item.score.toFixed(1)}</span>
             </div>
           ))}
           {(!data?.topArbiters || data.topArbiters.length === 0) && (
-            <p className="text-sm text-muted-foreground text-center py-6">No arbiter scores yet</p>
+            <p className="text-muted-foreground py-6 text-center text-sm">No arbiter scores yet</p>
           )}
         </div>
       ) : (
         <div className="space-y-2">
           {data?.topJousters?.map((item: any, i: number) => (
-            <div key={item.id} className="flex items-center gap-3 bg-card rounded-xl border border-border p-3">
-              <span className="text-lg font-bold text-muted-foreground w-6 text-center">
+            <div
+              key={item.id}
+              className="bg-card border-border flex items-center gap-3 rounded-xl border p-3"
+            >
+              <span className="text-muted-foreground w-6 text-center text-lg font-bold">
                 {i + 1}
               </span>
-              <div className="flex-1 min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-sm font-medium truncate">
+                  <span className="truncate text-sm font-medium">
                     {item.username ?? shortenAddress(item.address)}
                   </span>
                   <VerificationBadge level={item.worldIdLevel} />
                 </div>
-                <span className="text-xs text-muted-foreground">{item._count?.jousts ?? 0} predictions</span>
+                <span className="text-muted-foreground text-xs">
+                  {item._count?.jousts ?? 0} predictions
+                </span>
               </div>
               <span className="text-sm font-semibold">{item.totalPoints} pts</span>
             </div>
           ))}
           {(!data?.topJousters || data.topJousters.length === 0) && (
-            <p className="text-sm text-muted-foreground text-center py-6">No predictors yet</p>
+            <p className="text-muted-foreground py-6 text-center text-sm">No predictors yet</p>
           )}
         </div>
       )}

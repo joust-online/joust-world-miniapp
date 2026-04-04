@@ -64,9 +64,9 @@ export default function ProfilePage() {
 
   if (!session?.authenticated) {
     return (
-      <main className="pb-20 px-4 pt-4">
-        <h1 className="text-xl font-bold mb-4">Profile</h1>
-        <div className="text-center py-16">
+      <main className="px-4 pt-4 pb-20">
+        <h1 className="mb-4 text-xl font-bold">Profile</h1>
+        <div className="py-16 text-center">
           <p className="text-muted-foreground mb-4">Sign in to view your profile</p>
           <AuthButton large />
         </div>
@@ -77,9 +77,9 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <main className="pb-20 px-4 pt-4">
-        <h1 className="text-xl font-bold mb-4">Profile</h1>
-        <div className="text-center py-8 text-muted-foreground">Loading...</div>
+      <main className="px-4 pt-4 pb-20">
+        <h1 className="mb-4 text-xl font-bold">Profile</h1>
+        <div className="text-muted-foreground py-8 text-center">Loading...</div>
         <TabNavigation />
       </main>
     );
@@ -88,12 +88,12 @@ export default function ProfilePage() {
   const user = profileData?.user;
 
   return (
-    <main className="pb-20 px-4 pt-4">
-      <h1 className="text-xl font-bold mb-4">Profile</h1>
+    <main className="px-4 pt-4 pb-20">
+      <h1 className="mb-4 text-xl font-bold">Profile</h1>
 
       {user && (
         <div className="space-y-4">
-          <div className="bg-card rounded-xl border border-border p-4 text-center">
+          <div className="bg-card border-border rounded-xl border p-4 text-center">
             <input
               ref={fileInputRef}
               type="file"
@@ -123,25 +123,25 @@ export default function ProfilePage() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="relative w-16 h-16 mx-auto mb-2 rounded-full bg-muted flex items-center justify-center text-2xl group"
+              className="bg-muted group relative mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-full text-2xl"
             >
               {user.pfp ? (
-                <img src={user.pfp} alt="" className="w-full h-full rounded-full object-cover" />
+                <img src={user.pfp} alt="" className="h-full w-full rounded-full object-cover" />
               ) : (
                 "👤"
               )}
-              <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
                 <span className="text-xs text-white">{uploading ? "..." : "Edit"}</span>
               </div>
             </button>
             {editingName ? (
-              <div className="flex items-center justify-center gap-2 mt-1 mb-1">
+              <div className="mt-1 mb-1 flex items-center justify-center gap-2">
                 <input
                   value={newUsername}
                   onChange={(e) => setNewUsername(e.target.value)}
                   maxLength={50}
                   autoFocus
-                  className="bg-muted rounded-lg px-2 py-1 text-sm border border-border outline-none text-center w-36"
+                  className="bg-muted border-border w-36 rounded-lg border px-2 py-1 text-center text-sm outline-none"
                   onKeyDown={async (e) => {
                     if (e.key === "Enter" && newUsername.trim()) {
                       setSavingName(true);
@@ -162,50 +162,54 @@ export default function ProfilePage() {
                 />
                 <button
                   onClick={() => setEditingName(false)}
-                  className="text-xs text-muted-foreground"
+                  className="text-muted-foreground text-xs"
                 >
                   Cancel
                 </button>
               </div>
             ) : (
               <button
-                onClick={() => { setNewUsername(user.username); setEditingName(true); }}
-                className="font-semibold hover:text-accent transition-colors"
+                onClick={() => {
+                  setNewUsername(user.username);
+                  setEditingName(true);
+                }}
+                className="hover:text-accent font-semibold transition-colors"
               >
-                {user.username} <span className="text-xs text-muted-foreground">✏️</span>
+                {user.username} <span className="text-muted-foreground text-xs">✏️</span>
               </button>
             )}
-            <p className="text-xs text-muted-foreground">{shortenAddress(user.address)}</p>
-            <div className="flex items-center justify-center gap-2 mt-2">
+            <p className="text-muted-foreground text-xs">{shortenAddress(user.address)}</p>
+            <div className="mt-2 flex items-center justify-center gap-2">
               <VerificationBadge level={user.worldIdLevel} size="lg" />
             </div>
           </div>
 
           {/* World ID Verification Section */}
-          <div className="bg-card rounded-xl border border-border p-4">
-            <h3 className="font-semibold text-sm mb-3">World ID Verification</h3>
+          <div className="bg-card border-border rounded-xl border p-4">
+            <h3 className="mb-3 text-sm font-semibold">World ID Verification</h3>
             {user.worldIdVerified ? (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <VerificationBadge level={user.worldIdLevel} size="md" />
-                  <span className="text-sm text-muted-foreground">
-                    {user.worldIdLevel === "orb" ? "Orb-level proof of unique human" : "Device-level verification"}
+                  <span className="text-muted-foreground text-sm">
+                    {user.worldIdLevel === "orb"
+                      ? "Orb-level proof of unique human"
+                      : "Device-level verification"}
                   </span>
                 </div>
                 {user.worldIdVerifiedAt && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     Verified on {new Date(user.worldIdVerifiedAt).toLocaleDateString()}
                   </p>
                 )}
               </div>
             ) : (
               <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Verify with World ID to prove you are a unique human. Build trust as an arbiter and unlock the full Joust experience.
+                <p className="text-muted-foreground text-sm">
+                  Verify with World ID to prove you are a unique human. Build trust as an arbiter
+                  and unlock the full Joust experience.
                 </p>
-                {verifyError && (
-                  <p className="text-xs text-destructive">{verifyError}</p>
-                )}
+                {verifyError && <p className="text-destructive text-xs">{verifyError}</p>}
                 <button
                   onClick={async () => {
                     setVerifying(true);
@@ -221,7 +225,7 @@ export default function ProfilePage() {
                     }
                   }}
                   disabled={verifying}
-                  className="w-full py-2.5 bg-accent text-white rounded-xl font-medium text-sm disabled:opacity-50"
+                  className="bg-accent w-full rounded-xl py-2.5 text-sm font-medium text-white disabled:opacity-50"
                 >
                   {verifying ? "Verifying..." : "Verify with World ID"}
                 </button>
@@ -230,41 +234,41 @@ export default function ProfilePage() {
           </div>
 
           <div className="grid grid-cols-3 gap-3">
-            <div className="bg-card rounded-xl border border-border p-3 text-center">
+            <div className="bg-card border-border rounded-xl border p-3 text-center">
               <div className="text-lg font-bold">{user._count?.jousts ?? 0}</div>
-              <div className="text-xs text-muted-foreground">Predictions</div>
+              <div className="text-muted-foreground text-xs">Predictions</div>
             </div>
-            <div className="bg-card rounded-xl border border-border p-3 text-center">
+            <div className="bg-card border-border rounded-xl border p-3 text-center">
               <div className="text-lg font-bold text-green-400">{user.winCount ?? 0}</div>
-              <div className="text-xs text-muted-foreground">Wins</div>
+              <div className="text-muted-foreground text-xs">Wins</div>
             </div>
-            <div className="bg-card rounded-xl border border-border p-3 text-center">
+            <div className="bg-card border-border rounded-xl border p-3 text-center">
               <div className="text-lg font-bold">{user._count?.createdPools ?? 0}</div>
-              <div className="text-xs text-muted-foreground">Pools</div>
+              <div className="text-muted-foreground text-xs">Pools</div>
             </div>
           </div>
 
           {user.honorScore && (
-            <div className="bg-card rounded-xl border border-border p-4">
-              <h3 className="font-semibold text-sm mb-2">Arbiter Honor</h3>
+            <div className="bg-card border-border rounded-xl border p-4">
+              <h3 className="mb-2 text-sm font-semibold">Arbiter Honor</h3>
               <div className="flex items-center gap-4">
                 <span className="text-green-400">+{user.honorScore.totalUpvotes}</span>
                 <span className="text-destructive">-{user.honorScore.totalDownvotes}</span>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-muted-foreground text-sm">
                   Score: {user.honorScore.score.toFixed(1)}
                 </span>
               </div>
             </div>
           )}
 
-          <div className="bg-card rounded-xl border border-border p-4">
-            <div className="text-sm text-muted-foreground mb-1">Points</div>
+          <div className="bg-card border-border rounded-xl border p-4">
+            <div className="text-muted-foreground mb-1 text-sm">Points</div>
             <div className="text-2xl font-bold">{user.totalPoints}</div>
           </div>
 
           {myPoolsData?.pools?.length > 0 && (
             <div>
-              <h3 className="font-semibold text-sm mb-2">Your Pools</h3>
+              <h3 className="mb-2 text-sm font-semibold">Your Pools</h3>
               <div className="space-y-3">
                 {myPoolsData.pools.map((pool: any) => (
                   <PoolCard key={pool.id} pool={pool} />

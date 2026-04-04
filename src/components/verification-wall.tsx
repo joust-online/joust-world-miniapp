@@ -13,8 +13,8 @@ export function VerificationWall({ children }: { children: React.ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-transparent">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      <div className="flex min-h-screen items-center justify-center bg-transparent">
+        <div className="text-muted-foreground animate-pulse">Loading...</div>
       </div>
     );
   }
@@ -65,45 +65,54 @@ export function VerificationWall({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-transparent px-6 text-center">
-      <div className="w-20 h-20 rounded-full bg-accent/20 flex items-center justify-center text-4xl mb-6">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-transparent px-6 text-center">
+      <div className="bg-accent/20 mb-6 flex h-20 w-20 items-center justify-center rounded-full text-4xl">
         ⚔️
       </div>
-      <h1 className="text-3xl font-bold mb-2">Joust</h1>
-      <p className="text-lg text-muted-foreground mb-1">Hypersocial Media</p>
-      <p className="text-sm text-muted-foreground mb-8 max-w-xs">
-        Put your reputation on the line. Stake convictions, challenge friends, and prove you know what's up.
+      <h1 className="mb-2 text-3xl font-bold">Joust</h1>
+      <p className="text-muted-foreground mb-1 text-lg">Hypersocial Media</p>
+      <p className="text-muted-foreground mb-8 max-w-xs text-sm">
+        Put your reputation on the line. Stake convictions, challenge friends, and prove you know
+        what's up.
       </p>
-      <div className="space-y-3 max-w-xs w-full mb-8">
+      <div className="mb-8 w-full max-w-xs space-y-3">
         <div className="flex items-center gap-3 text-left">
-          <span className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">🔮</span>
+          <span className="bg-muted flex h-8 w-8 items-center justify-center rounded-full text-sm">
+            🔮
+          </span>
           <div>
             <div className="text-sm font-medium">Sybil-Resistant</div>
-            <div className="text-xs text-muted-foreground">One person = one voice</div>
+            <div className="text-muted-foreground text-xs">One person = one voice</div>
           </div>
         </div>
         <div className="flex items-center gap-3 text-left">
-          <span className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">⚖️</span>
+          <span className="bg-muted flex h-8 w-8 items-center justify-center rounded-full text-sm">
+            ⚖️
+          </span>
           <div>
             <div className="text-sm font-medium">Human Arbiters</div>
-            <div className="text-xs text-muted-foreground">Outcomes decided by trusted people, not chance</div>
+            <div className="text-muted-foreground text-xs">
+              Outcomes decided by trusted people, not chance
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-3 text-left">
-          <span className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">⭐</span>
+          <span className="bg-muted flex h-8 w-8 items-center justify-center rounded-full text-sm">
+            ⭐
+          </span>
           <div>
             <div className="text-sm font-medium">Honor System</div>
-            <div className="text-xs text-muted-foreground">Rate arbiters — verified humans only</div>
+            <div className="text-muted-foreground text-xs">
+              Rate arbiters — verified humans only
+            </div>
           </div>
         </div>
       </div>
-      {error && (
-        <p className="text-xs text-destructive mb-3">{error}</p>
-      )}
+      {error && <p className="text-destructive mb-3 text-xs">{error}</p>}
       <button
         onClick={handleSignIn}
         disabled={loading}
-        className="px-8 py-3 bg-accent text-white rounded-full font-semibold text-base disabled:opacity-50"
+        className="bg-accent rounded-full px-8 py-3 text-base font-semibold text-white disabled:opacity-50"
       >
         {loading ? "Connecting..." : "Sign In with World App"}
       </button>

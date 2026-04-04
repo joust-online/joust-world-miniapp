@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
       if (limit && amount > limit) {
         return NextResponse.json(
           { error: "Device-verified users have limited stakes. Verify with Orb for unlimited." },
-          { status: 403 }
+          { status: 403 },
         );
       }
     }

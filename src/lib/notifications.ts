@@ -25,7 +25,7 @@ export async function sendPushNotification({
           message,
           mini_app_path: miniAppPath,
         }),
-      }
+      },
     );
     return response.ok;
   } catch (error) {

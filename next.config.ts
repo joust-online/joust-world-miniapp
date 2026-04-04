@@ -3,9 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Allow World App domains for images
   images: {
-    remotePatterns: [
-      { protocol: "https", hostname: "**.world.org" },
-    ],
+    remotePatterns: [{ protocol: "https", hostname: "**.world.org" }],
   },
   async headers() {
     return [

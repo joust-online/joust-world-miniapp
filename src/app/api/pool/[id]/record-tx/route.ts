@@ -40,10 +40,7 @@ const recordTxSchema = z.object({
   winningJoustType: z.number().optional(),
 });
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireSession();
     const { id } = await params;
@@ -124,7 +121,10 @@ export async function POST(
 
       case "settle":
         if (winningJoustType === undefined) {
-          return NextResponse.json({ error: "winningJoustType required for settle" }, { status: 400 });
+          return NextResponse.json(
+            { error: "winningJoustType required for settle" },
+            { status: 400 },
+          );
         }
         updatedPool = await prisma.pool.update({
           where: { id },
@@ -140,7 +140,12 @@ export async function POST(
           data: { isWinner: true },
         });
 
-        await notifyAllJousters(id, "POOL_SETTLED", "Pool Settled", `The pool "${pool.title}" has been settled.`);
+        await notifyAllJousters(
+          id,
+          "POOL_SETTLED",
+          "Pool Settled",
+          `The pool "${pool.title}" has been settled.`,
+        );
         break;
 
       case "refund":
@@ -149,7 +154,12 @@ export async function POST(
           data: { state: "REFUNDED", refundedAt: new Date() },
         });
 
-        await notifyAllJousters(id, "POOL_REFUNDED", "Pool Refunded", `The pool "${pool.title}" has been refunded.`);
+        await notifyAllJousters(
+          id,
+          "POOL_REFUNDED",
+          "Pool Refunded",
+          `The pool "${pool.title}" has been refunded.`,
+        );
         break;
     }
 

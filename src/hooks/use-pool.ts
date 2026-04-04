@@ -17,7 +17,12 @@ interface Pool {
   arbiterAccepted: boolean;
   winningJoustType: number;
   options: { id: number; joustType: number; label: string; orderIndex: number }[];
-  jousts: { id: number; joustType: number; amount: bigint; user?: { id: number; username: string; address: string; worldIdLevel?: string | null } }[];
+  jousts: {
+    id: number;
+    joustType: number;
+    amount: bigint;
+    user?: { id: number; username: string; address: string; worldIdLevel?: string | null };
+  }[];
   creator: { id: number; username: string; address: string; worldIdLevel?: string | null };
   arbiter?: { id: number; username: string; address: string; worldIdLevel?: string | null };
   _count: { jousts: number };
@@ -72,7 +77,12 @@ export function useCreatePool() {
 export function useRecordTx(poolId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { txHash: string; action: string; contractId?: number; winningJoustType?: number }) => {
+    mutationFn: async (data: {
+      txHash: string;
+      action: string;
+      contractId?: number;
+      winningJoustType?: number;
+    }) => {
       const res = await fetch(`/api/pool/${poolId}/record-tx`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

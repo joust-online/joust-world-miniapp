@@ -12,15 +12,15 @@ export function DevInfo() {
   if (process.env.NODE_ENV !== "development") return null;
 
   return (
-    <div className="fixed bottom-16 right-2 z-50">
+    <div className="fixed right-2 bottom-16 z-50">
       <button
         onClick={() => setOpen(!open)}
-        className="w-8 h-8 bg-yellow-500 text-black rounded-full text-xs font-bold flex items-center justify-center"
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-500 text-xs font-bold text-black"
       >
         D
       </button>
       {open && (
-        <div className="absolute bottom-10 right-0 w-64 bg-card border border-border rounded-lg p-3 text-xs space-y-1">
+        <div className="bg-card border-border absolute right-0 bottom-10 w-64 space-y-1 rounded-lg border p-3 text-xs">
           <p>MiniKit: {MiniKit.isInstalled() ? "Installed" : "Not installed"}</p>
           <p>Chain: {CHAIN_ID}</p>
           <p className="break-all">Contract: {JOUST_ARENA_ADDRESS}</p>

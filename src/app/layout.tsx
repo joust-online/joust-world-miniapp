@@ -54,11 +54,7 @@ const firaMono = Fira_Code({
   display: "optional",
 });
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body className={cn(jacquard.variable, jeju.variable, firaMono.variable, "dark")}>
