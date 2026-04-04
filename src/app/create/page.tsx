@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { TabNavigation } from "@/components/tab-navigation";
 import { WorldIdGate } from "@/components/world-id-gate";
 import { useCreatePool } from "@/hooks/use-pool";
-import { useTransaction } from "@/hooks/use-transaction";
 import { useSession } from "@/hooks/use-profile";
 import { COLLATERAL_TOKENS, JOUST_ARENA_ADDRESS } from "@/lib/contracts";
 import { joustArenaAbi } from "@/lib/abi";
@@ -17,7 +16,6 @@ function CreatePoolForm() {
   const router = useRouter();
   const { data: session } = useSession();
   const createPool = useCreatePool();
-  const tx = useTransaction();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [collateral, setCollateral] = useState("ETH");
@@ -57,55 +55,80 @@ function CreatePoolForm() {
       setStep("deploying");
 
       // Step 2: Deploy to chain via MiniKit
-      const txHash = await tx.execute(() =>
-        createPoolOnChain({
-          arbiter: session?.user?.address,
-          arbiterFee: parseInt(arbiterFee),
-          collateral: token.address,
-          minJoustAmount: minAmountBigInt,
-          supportedJoustTypes: options.length,
-          endTime: endTimestamp,
-        })
-      );
+      const txResult = await createPoolOnChain({
+        arbiter: session?.user?.address,
+        arbiterFee: parseInt(arbiterFee),
+        collateral: token.address,
+        minJoustAmount: minAmountBigInt,
+        supportedJoustTypes: options.length,
+        endTime: endTimestamp,
+      });
 
+      const userOpHash = txResult.userOpHash;
       setStep("recording");
 
-      // Step 3: Read the contractId from the tx receipt via PoolCreated event
+      // Step 3: Poll for user operation to be mined and get real tx hash
+      let txHash: string | undefined;
+      for (let i = 0; i < 30; i++) {
+        await new Promise((r) => setTimeout(r, 2000));
+        const statusRes = await fetch(
+          `https://developer.world.org/api/v2/minikit/userop/${userOpHash}`
+        );
+        if (statusRes.ok) {
+          const status = await statusRes.json();
+          if (status.status === "success" && status.transaction_hash) {
+            txHash = status.transaction_hash;
+            break;
+          }
+        }
+      }
+
+      if (!txHash) {
+        throw new Error("Transaction not confirmed after 60s");
+      }
+
+      // Step 4: Read contractId from chain (poolCounter - 1 is the latest pool)
       const client = createPublicClient({
         chain: worldchain,
         transport: http(),
       });
 
-      const receipt = await client.waitForTransactionReceipt({ hash: txHash });
-      let contractId: number | undefined;
-
-      for (const log of receipt.logs) {
-        try {
-          const decoded = decodeEventLog({
-            abi: joustArenaAbi,
-            data: log.data,
-            topics: log.topics,
-          });
-          if (decoded.eventName === "PoolCreated") {
-            contractId = Number((decoded.args as unknown as { id: bigint }).id);
-            break;
-          }
-        } catch {
-          // Not this event, skip
+      let contractId: number = 0;
+      try {
+        const receipt = await client.getTransactionReceipt({ hash: txHash as `0x${string}` });
+        let found = false;
+        for (const log of receipt.logs) {
+          try {
+            const decoded = decodeEventLog({
+              abi: joustArenaAbi,
+              data: log.data,
+              topics: log.topics,
+            });
+            if (decoded.eventName === "PoolCreated" || decoded.eventName === "PoolCreationPending") {
+              contractId = Number((decoded.args as any).id);
+              found = true;
+              break;
+            }
+          } catch {}
         }
-      }
-
-      // Fallback: read poolCounter from chain (the latest pool id)
-      if (contractId === undefined) {
+        if (!found) {
+          const counter = await client.readContract({
+            address: JOUST_ARENA_ADDRESS,
+            abi: joustArenaAbi,
+            functionName: "poolCounter",
+          });
+          contractId = Number(counter) - 1;
+        }
+      } catch {
         const counter = await client.readContract({
           address: JOUST_ARENA_ADDRESS,
           abi: joustArenaAbi,
           functionName: "poolCounter",
         });
-        contractId = Number(counter);
+        contractId = Number(counter) - 1;
       }
 
-      // Step 4: Record tx hash and contractId back to DB
+      // Step 5: Record tx hash and contractId back to DB
       const recordRes = await fetch(`/api/pool/${dbPoolId}/record-tx`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

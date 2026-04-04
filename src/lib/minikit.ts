@@ -1,10 +1,23 @@
-import { MiniKit, tokenToDecimals, Tokens, VerificationLevel } from "@worldcoin/minikit-js";
-import { JOUST_ARENA_ADDRESS, USDC_ADDRESS, ETH_ADDRESS } from "./contracts";
+import { MiniKit } from "@worldcoin/minikit-js";
+import { encodeFunctionData } from "viem";
+import { JOUST_ARENA_ADDRESS } from "./contracts";
 import { joustArenaAbi } from "./abi";
 
-export function isMiniKitAvailable(): boolean {
-  return MiniKit.isInstalled();
-}
+const PERMIT2 = "0x000000000022D473030F116dDEE9F6B43aC78BA3";
+const PERMIT2_APPROVE_ABI = [
+  {
+    name: "approve",
+    type: "function",
+    inputs: [
+      { name: "token", type: "address" },
+      { name: "spender", type: "address" },
+      { name: "amount", type: "uint160" },
+      { name: "expiration", type: "uint48" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+] as const;
 
 export async function sendTransaction(
   functionName: string,
@@ -15,24 +28,41 @@ export async function sendTransaction(
     throw new Error("MiniKit not available. Open this app in World App.");
   }
 
-  const txPayload = {
-    transaction: [
+  const data = encodeFunctionData({
+    abi: joustArenaAbi,
+    functionName,
+    args,
+  });
+
+  const result = await MiniKit.sendTransaction({
+    chainId: 480,
+    transactions: [
       {
-        address: JOUST_ARENA_ADDRESS,
-        abi: joustArenaAbi,
-        functionName,
-        args,
-        ...(value ? { value: value.toString() } : {}),
+        to: JOUST_ARENA_ADDRESS,
+        data,
+        ...(value ? { value: `0x${value.toString(16)}` } : {}),
       },
     ],
-  };
+  });
 
-  const result = await MiniKit.commandsAsync.sendTransaction(txPayload);
-  if (result.finalPayload.status === "error") {
-    throw new Error(result.finalPayload.error_code ?? "Transaction failed");
+  if (result.executedWith === "fallback") {
+    throw new Error("Transaction not available outside World App");
   }
-  return result.finalPayload;
+  return result.data;
 }
+
+const ERC20_APPROVE_ABI = [
+  {
+    name: "approve",
+    type: "function",
+    inputs: [
+      { name: "spender", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+    stateMutability: "nonpayable",
+  },
+] as const;
 
 export async function sendERC20Transaction(
   functionName: string,
@@ -44,56 +74,45 @@ export async function sendERC20Transaction(
     throw new Error("MiniKit not available. Open this app in World App.");
   }
 
-  // For ERC20 jousts, we need to approve + call in one batch via Permit2
-  const txPayload = {
-    transaction: [
-      {
-        address: JOUST_ARENA_ADDRESS,
-        abi: joustArenaAbi,
-        functionName,
-        args,
-      },
-    ],
-    permit2: [
-      {
-        permitted: {
-          token: tokenAddress,
-          amount: amount.toString(),
-        },
-        spender: JOUST_ARENA_ADDRESS,
-        nonce: Date.now().toString(),
-        deadline: Math.floor(Date.now() / 1000 + 30 * 60).toString(),
-      },
-    ],
-  };
-
-  const result = await MiniKit.commandsAsync.sendTransaction(txPayload);
-  if (result.finalPayload.status === "error") {
-    throw new Error(result.finalPayload.error_code ?? "Transaction failed");
-  }
-  return result.finalPayload;
-}
-
-export async function requestVerification(action: string, signal?: string) {
-  if (!MiniKit.isInstalled()) {
-    throw new Error("MiniKit not available. Open this app in World App.");
-  }
-
-  const result = await MiniKit.commandsAsync.verify({
-    action,
-    signal,
-    verification_level: action === "verify-identity" ? VerificationLevel.Device : VerificationLevel.Orb,
+  // Step 1: Permit2 approve the token to JoustArena (World App uses Permit2 internally)
+  const permit2ApproveData = encodeFunctionData({
+    abi: PERMIT2_APPROVE_ABI,
+    functionName: "approve",
+    args: [tokenAddress as `0x${string}`, JOUST_ARENA_ADDRESS, amount, 0],
   });
 
-  if (result.finalPayload.status === "error") {
-    throw new Error("Verification failed");
+  // Step 2: Standard ERC20 approve JoustArena to pull tokens
+  const erc20ApproveData = encodeFunctionData({
+    abi: ERC20_APPROVE_ABI,
+    functionName: "approve",
+    args: [JOUST_ARENA_ADDRESS, amount],
+  });
+
+  // Step 3: The actual contract call
+  const txData = encodeFunctionData({
+    abi: joustArenaAbi,
+    functionName,
+    args,
+  });
+
+  const result = await MiniKit.sendTransaction({
+    chainId: 480,
+    transactions: [
+      { to: PERMIT2, data: permit2ApproveData },
+      { to: tokenAddress as `0x${string}`, data: erc20ApproveData },
+      { to: JOUST_ARENA_ADDRESS, data: txData },
+    ],
+  });
+
+  if (result.executedWith === "fallback") {
+    throw new Error("Transaction not available outside World App");
   }
-  return result.finalPayload;
+  return result.data;
 }
 
 export async function sharePool(poolId: string, poolTitle: string, won?: boolean, closeAfter?: boolean) {
   const appId = process.env.NEXT_PUBLIC_APP_ID;
-  await MiniKit.commandsAsync.share({
+  await MiniKit.share({
     title: `Joust: ${poolTitle}`,
     text: won !== undefined
       ? `${won ? "I won!" : "I participated in"} "${poolTitle}" on Joust!`
@@ -106,11 +125,11 @@ export async function sharePool(poolId: string, poolTitle: string, won?: boolean
 }
 
 export async function shareContacts(poolTitle: string) {
-  const result = await MiniKit.commandsAsync.shareContacts({
+  const result = await MiniKit.shareContacts({
     isMultiSelectEnabled: true,
     inviteMessage: `Join "${poolTitle}" on Joust!`,
   });
-  return result.finalPayload;
+  return result.data;
 }
 
 // ── On-chain action helpers ──
@@ -135,60 +154,15 @@ export async function createPoolOnChain(params: {
   ]);
 }
 
-export async function createJoustOnChain(
-  params: {
-    poolId: bigint;
-    amount: bigint;
-    player: string;
-    joustType: number;
-  },
-  isETH: boolean,
-  tokenAddress?: string,
-) {
-  if (isETH) {
-    return sendTransaction(
-      "createJoust",
-      [[params.poolId, params.amount, params.player, params.joustType]],
-      params.amount,
-    );
-  } else {
-    if (!tokenAddress) throw new Error("tokenAddress required for ERC20 jousts");
-    return sendERC20Transaction(
-      "createJoust",
-      [[params.poolId, params.amount, params.player, params.joustType]],
-      tokenAddress,
-      params.amount,
-    );
-  }
-}
-
-export async function settlePoolOnChain(poolId: bigint, winningJoustType: number) {
-  return sendTransaction("settlePoolAndPayout", [poolId, winningJoustType]);
-}
-
-export async function refundPoolOnChain(poolId: bigint) {
-  return sendTransaction("refundPool", [poolId]);
-}
-
-export async function acceptArbiterOnChain(poolId: bigint) {
-  return sendTransaction("acceptArbiterDelegation", [poolId]);
-}
-
-export async function closePoolOnChain(poolId: bigint) {
-  return sendTransaction("closePool", [poolId]);
-}
-
 export function closeMiniApp() {
   if (!MiniKit.isInstalled()) return;
-  (MiniKit.commandsAsync as any).closeMiniApp();
+  MiniKit.closeMiniApp();
 }
 
 export function sendHaptic(type: "success" | "error" | "heavy") {
   if (!MiniKit.isInstalled()) return;
-  const haptics = {
-    success: { hapticsType: "notification" as const, style: "success" as const },
-    error: { hapticsType: "notification" as const, style: "error" as const },
-    heavy: { hapticsType: "impact" as const, style: "heavy" as const },
-  };
-  MiniKit.commandsAsync.sendHapticFeedback(haptics[type]);
+  MiniKit.sendHapticFeedback({
+    hapticsType: type === "heavy" ? "impact" : "notification",
+    style: type,
+  } as any);
 }

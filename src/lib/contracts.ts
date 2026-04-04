@@ -1,9 +1,6 @@
 import { type Address } from "viem";
 import { worldchain } from "viem/chains";
 
-export { joustArenaAbi } from "./abi";
-
-export const CHAIN = worldchain;
 export const CHAIN_ID = worldchain.id; // 480
 
 // Set after deployment
@@ -17,3 +14,11 @@ export const COLLATERAL_TOKENS: Record<string, { symbol: string; decimals: numbe
   ETH: { symbol: "ETH", decimals: 18, address: ETH_ADDRESS },
   USDC: { symbol: "USDC", decimals: 6, address: USDC_ADDRESS },
 };
+
+/** Look up collateral token info by on-chain address. */
+export function getCollateralInfo(address: string) {
+  const normalized = address.toLowerCase();
+  return Object.values(COLLATERAL_TOKENS).find(
+    (t) => t.address.toLowerCase() === normalized
+  ) ?? { symbol: "???", decimals: 18, address: normalized };
+}

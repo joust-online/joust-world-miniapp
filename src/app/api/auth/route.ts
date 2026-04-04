@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid SIWE signature" }, { status: 401 });
     }
 
-    const address = verification.siweMessageData.address.toLowerCase();
+    const address = (verification.siweMessageData?.address ?? payload.address).toLowerCase();
 
     // Upsert user
     const user = await prisma.user.upsert({

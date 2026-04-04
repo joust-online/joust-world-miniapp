@@ -7,19 +7,12 @@ import { useSession } from "@/hooks/use-profile";
 import { useTransaction } from "@/hooks/use-transaction";
 import { WorldIdGate } from "@/components/world-id-gate";
 import { formatAmount, shortenAddress } from "@/lib/utils";
-import { COLLATERAL_TOKENS, ETH_ADDRESS } from "@/lib/contracts";
+import { getCollateralInfo, ETH_ADDRESS } from "@/lib/contracts";
 import { sharePool, shareContacts, closeMiniApp, sendHaptic, sendTransaction, sendERC20Transaction } from "@/lib/minikit";
 import { HonorVote } from "@/components/honor-vote";
 import { formatDistanceToNow } from "date-fns";
 import { parseUnits } from "viem";
 import { useQueryClient } from "@tanstack/react-query";
-
-function getCollateralInfo(address: string) {
-  const normalized = address.toLowerCase();
-  return Object.values(COLLATERAL_TOKENS).find(
-    (t) => t.address.toLowerCase() === normalized
-  ) ?? { symbol: "???", decimals: 18, address: normalized };
-}
 
 /* ── Pool lifecycle stages ── */
 const LIFECYCLE_STAGES = ["PENDING", "ACTIVE", "CLOSED", "SETTLED"] as const;
@@ -156,13 +149,14 @@ export default function PoolDetailPage() {
     const amountWei = parseUnits(amount, collateral.decimals);
 
     const hash = await joustTx.execute(async () => {
-      // Build the Joust struct: { id: poolId, amount, player, joustType }
-      const joustArgs = [{
-        id: contractId.toString(),
-        amount: amountWei.toString(),
-        player: session!.user.address,
+      // Build the Joust struct as tuple: [id, amount, player, joustType]
+      const joustStruct = {
+        id: contractId,
+        amount: amountWei,
+        player: session!.user.address as `0x${string}`,
         joustType: selectedOption,
-      }];
+      };
+      const joustArgs = [joustStruct];
 
       if (isETH) {
         return sendTransaction("createJoust", joustArgs, amountWei);
@@ -206,7 +200,7 @@ export default function PoolDetailPage() {
   const handleAcceptArbiter = async () => {
     if (contractId == null) return;
     const hash = await arbiterTx.execute(async () => {
-      return sendTransaction("acceptArbiterDelegation", [contractId.toString()]);
+      return sendTransaction("acceptArbiterDelegation", [contractId]);
     });
     if (hash) {
       await recordTx.mutateAsync({ txHash: hash, action: "accept-arbiter" });
@@ -218,7 +212,7 @@ export default function PoolDetailPage() {
   const handleClosePool = async () => {
     if (contractId == null) return;
     const hash = await arbiterTx.execute(async () => {
-      return sendTransaction("closePool", [contractId.toString()]);
+      return sendTransaction("closePool", [contractId]);
     });
     if (hash) {
       await recordTx.mutateAsync({ txHash: hash, action: "close" });
@@ -231,7 +225,7 @@ export default function PoolDetailPage() {
     if (contractId == null || settleOption == null) return;
     const hash = await arbiterTx.execute(async () => {
       return sendTransaction("settlePoolAndPayout", [
-        contractId.toString(),
+        contractId,
         settleOption,
       ]);
     });
@@ -251,7 +245,7 @@ export default function PoolDetailPage() {
   const handleRefundPool = async () => {
     if (contractId == null) return;
     const hash = await arbiterTx.execute(async () => {
-      return sendTransaction("refundPool", [contractId.toString()]);
+      return sendTransaction("refundPool", [contractId]);
     });
     if (hash) {
       await recordTx.mutateAsync({ txHash: hash, action: "refund" });

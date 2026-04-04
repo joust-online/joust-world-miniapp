@@ -1,24 +1,4 @@
-import { verifyCloudProof, IVerifyResponse, ISuccessResult } from "@worldcoin/minikit-js";
-
-const APP_ID = process.env.NEXT_PUBLIC_APP_ID as `app_${string}`;
-
 export type VerificationLevel = "orb" | "device";
-
-export interface WorldIdProof {
-  merkle_root: string;
-  nullifier_hash: string;
-  proof: string;
-  verification_level: VerificationLevel;
-}
-
-export async function verifyWorldIdProof(
-  proof: ISuccessResult,
-  action: string,
-  signal?: string
-): Promise<IVerifyResponse> {
-  const response = await verifyCloudProof(proof, APP_ID, action, signal);
-  return response;
-}
 
 export function requireWorldId(
   worldIdVerified: boolean,
@@ -34,7 +14,12 @@ export function requireWorldId(
   return { allowed: true };
 }
 
-export const JOUST_LIMITS = {
-  device: { maxAmount: BigInt(1_000_000) }, // 1 USDC (6 decimals)
-  orb: { maxAmount: null }, // unlimited
-} as const;
+// Device-level limits: ~$1 equivalent per joust
+export const JOUST_LIMITS_BY_COLLATERAL: Record<string, bigint> = {
+  "0x0000000000000000000000000000000000000000": BigInt("500000000000000"), // 0.0005 ETH (~$1)
+  "0x79a02482a880bce3f13e09da970dc34db4cd24d1": BigInt("1000000"), // 1 USDC
+};
+
+export function getDeviceJoustLimit(collateralAddress: string): bigint | null {
+  return JOUST_LIMITS_BY_COLLATERAL[collateralAddress.toLowerCase()] ?? null;
+}

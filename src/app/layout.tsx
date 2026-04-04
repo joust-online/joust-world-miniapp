@@ -1,3 +1,8 @@
+// Patch BigInt serialization globally for API responses
+(BigInt.prototype as any).toJSON = function () {
+  return this.toString();
+};
+
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Fira_Code, Jacquard_24 } from "next/font/google";
