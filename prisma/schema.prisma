@@ -29,6 +29,7 @@ model User {
   votesReceived        HonorVote[]           @relation("ArbiterHonor")
   honorScore           HonorScore?           @relation("UserHonorScore")
   worldIdVerifications WorldIdVerification[]
+  createdAiArbiters    AiArbiter[]           @relation("AiArbiterCreator")
 
   @@index([address])
 }
@@ -62,6 +63,9 @@ model Pool {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  aiArbiterId Int?
+  aiArbiter   AiArbiter? @relation("AiArbiterPools", fields: [aiArbiterId], references: [id])
 
   jousts        Joust[]
   options       PoolOption[]
@@ -199,4 +203,39 @@ model WorldIdVerification {
 
   @@index([userId])
   @@index([action, nullifierHash])
+}
+
+model AiArbiter {
+  id            Int     @id @default(autoincrement())
+  name          String  @db.VarChar(100)
+  description   String? @db.VarChar(2000)
+  category      String  @db.VarChar(50)
+  strategy      String  @db.Text
+  walletAddress String  @db.VarChar(42)
+  creatorId     Int
+  isActive      Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  creator User   @relation("AiArbiterCreator", fields: [creatorId], references: [id])
+  pools   Pool[] @relation("AiArbiterPools")
+
+  @@index([category])
+  @@index([creatorId])
+  @@index([walletAddress])
+}
+
+model AgentKitUsage {
+  id       Int    @id @default(autoincrement())
+  endpoint String @db.VarChar(500)
+  humanId  String @db.VarChar(100)
+  count    Int    @default(0)
+
+  @@unique([endpoint, humanId])
+}
+
+model AgentKitNonce {
+  nonce     String   @id @db.VarChar(200)
+  createdAt DateTime @default(now())
 }
