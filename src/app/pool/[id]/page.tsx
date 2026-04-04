@@ -365,7 +365,7 @@ export default function PoolDetailPage() {
 
       {/* Joust Form */}
       {isActive && session?.authenticated && (
-        <WorldIdGate level="device">
+        <>
           {showJoust ? (
             <div className="bg-card rounded-xl border border-border p-4 mb-4">
               <h3 className="font-semibold text-sm mb-3">Stake Prediction</h3>
@@ -417,7 +417,7 @@ export default function PoolDetailPage() {
               Stake Prediction
             </button>
           )}
-        </WorldIdGate>
+        </>
       )}
 
       {/* Share / Invite / Done Actions */}
@@ -442,8 +442,9 @@ export default function PoolDetailPage() {
         </button>
       </div>
 
-      {/* Arbiter Panel */}
+      {/* Arbiter Panel — requires Orb verification */}
       {showArbiterPanel && session?.authenticated && (
+        <WorldIdGate level="orb" action="verify-identity">
         <div className="bg-card rounded-xl border border-accent/30 p-4 mb-4">
           <h3 className="font-semibold text-sm mb-3 text-accent">Arbiter Actions</h3>
 
@@ -525,6 +526,7 @@ export default function PoolDetailPage() {
             )}
           </div>
         </div>
+        </WorldIdGate>
       )}
 
       {/* Arbiter Info */}

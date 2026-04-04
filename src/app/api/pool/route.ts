@@ -71,10 +71,6 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await requireSession();
-    const check = requireWorldId(session.worldIdVerified, session.worldIdLevel, "orb");
-    if (!check.allowed) {
-      return NextResponse.json({ error: check.reason }, { status: 403 });
-    }
 
     const body = await req.json();
     const parsed = createPoolSchema.safeParse(body);
