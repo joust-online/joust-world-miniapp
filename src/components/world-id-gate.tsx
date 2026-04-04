@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSession } from "@/hooks/use-profile";
 import { runWorldIdVerification } from "@/lib/world-id-verify";
 import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
 
 interface WorldIdGateProps {
   level: "device" | "orb";
@@ -67,13 +68,9 @@ export function WorldIdGate({
         </p>
       </div>
       {error && <p className="text-destructive mb-3 text-xs">{error}</p>}
-      <button
-        onClick={handleVerify}
-        disabled={verifying}
-        className="bg-accent rounded-full px-6 py-2.5 text-sm font-medium text-white disabled:opacity-50"
-      >
+      <Button onClick={handleVerify} disabled={verifying} className="px-6">
         {verifying ? "Verifying..." : `Verify with ${level === "orb" ? "Orb" : "World ID"}`}
-      </button>
+      </Button>
     </div>
   );
 }

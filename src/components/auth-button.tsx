@@ -5,6 +5,7 @@ import { MiniKit } from "@worldcoin/minikit-js";
 import { useSession } from "@/hooks/use-profile";
 import { useQueryClient } from "@tanstack/react-query";
 import { shortenAddress } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 export function AuthButton({ large }: { large?: boolean }) {
   const { data: session } = useSession();
@@ -64,14 +65,8 @@ export function AuthButton({ large }: { large?: boolean }) {
   }
 
   return (
-    <button
-      onClick={handleSignIn}
-      disabled={loading}
-      className={`bg-accent rounded-full font-medium text-white disabled:opacity-50 ${
-        large ? "px-8 py-3 text-base" : "px-4 py-2 text-sm"
-      }`}
-    >
+    <Button onClick={handleSignIn} disabled={loading} size={large ? "lg" : "default"}>
       {loading ? "Connecting..." : "Sign In"}
-    </button>
+    </Button>
   );
 }

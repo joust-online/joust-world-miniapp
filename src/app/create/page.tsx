@@ -12,6 +12,17 @@ import { joustArenaAbi } from "@/lib/abi";
 import { sendHaptic, createPoolOnChain } from "@/lib/minikit";
 import { createPublicClient, http, decodeEventLog } from "viem";
 import { worldchain } from "viem/chains";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 function CreatePoolForm() {
   const router = useRouter();
@@ -116,8 +127,8 @@ function CreatePoolForm() {
               break;
             }
           } catch {
-              // Non-target log, skip
-            }
+            // Non-target log, skip
+          }
         }
         if (!found) {
           const counter = await client.readContract({
@@ -182,125 +193,127 @@ function CreatePoolForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="text-muted-foreground mb-1 block text-sm">Title</label>
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Will ETH hit $5k by July?"
-          required
-          className="bg-muted border-border focus:border-accent w-full rounded-lg border px-3 py-2.5 text-sm outline-none"
-        />
-      </div>
-
-      <div>
-        <label className="text-muted-foreground mb-1 block text-sm">Description (optional)</label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={2}
-          className="bg-muted border-border focus:border-accent w-full resize-none rounded-lg border px-3 py-2.5 text-sm outline-none"
-        />
-      </div>
-
-      <div>
-        <label className="text-muted-foreground mb-1 block text-sm">Options</label>
-        <div className="space-y-2">
-          {options.map((opt, i) => (
-            <input
-              key={i}
-              value={opt.label}
-              onChange={(e) => {
-                const next = [...options];
-                next[i] = { ...next[i], label: e.target.value };
-                setOptions(next);
-              }}
-              placeholder={`Option ${i + 1}`}
+    <Card className="rounded-xl py-0 shadow-none">
+      <CardContent className="p-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-muted-foreground mb-1 block text-sm">Title</label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Will ETH hit $5k by July?"
               required
-              className="bg-muted border-border focus:border-accent w-full rounded-lg border px-3 py-2.5 text-sm outline-none"
             />
-          ))}
-          {options.length < 6 && (
-            <button type="button" onClick={addOption} className="text-accent text-xs">
-              + Add option
-            </button>
+          </div>
+
+          <div>
+            <label className="text-muted-foreground mb-1 block text-sm">
+              Description (optional)
+            </label>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+            />
+          </div>
+
+          <div>
+            <label className="text-muted-foreground mb-1 block text-sm">Options</label>
+            <div className="space-y-2">
+              {options.map((opt, i) => (
+                <Input
+                  key={i}
+                  value={opt.label}
+                  onChange={(e) => {
+                    const next = [...options];
+                    next[i] = { ...next[i], label: e.target.value };
+                    setOptions(next);
+                  }}
+                  placeholder={`Option ${i + 1}`}
+                  required
+                />
+              ))}
+              {options.length < 6 && (
+                <Button
+                  type="button"
+                  variant="link"
+                  onClick={addOption}
+                  className="h-auto p-0 text-xs"
+                >
+                  + Add option
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-muted-foreground mb-1 block text-sm">Collateral</label>
+              <Select value={collateral} onValueChange={setCollateral}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(COLLATERAL_TOKENS).map(([key, t]) => (
+                    <SelectItem key={key} value={key}>
+                      {t.symbol}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-muted-foreground mb-1 block text-sm">Min Stake</label>
+              <Input
+                type="number"
+                step="any"
+                value={minAmount}
+                onChange={(e) => setMinAmount(e.target.value)}
+                required
+              />
+              {ethPrice && parseFloat(minAmount) > 0 && (
+                <p className="text-muted-foreground mt-1 text-xs">
+                  ≈ ${(parseFloat(minAmount) * ethPrice).toFixed(2)} USD
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-muted-foreground mb-1 block text-sm">Arbiter Fee (bps)</label>
+              <Input
+                type="number"
+                value={arbiterFee}
+                onChange={(e) => setArbiterFee(e.target.value)}
+                min="0"
+                max="200"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-muted-foreground mb-1 block text-sm">End Date</label>
+              <Input
+                type="datetime-local"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
+              {error}
+            </div>
           )}
-        </div>
-      </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="text-muted-foreground mb-1 block text-sm">Collateral</label>
-          <select
-            value={collateral}
-            onChange={(e) => setCollateral(e.target.value)}
-            className="bg-muted border-border w-full rounded-lg border px-3 py-2.5 text-sm outline-none"
-          >
-            {Object.entries(COLLATERAL_TOKENS).map(([key, t]) => (
-              <option key={key} value={key}>
-                {t.symbol}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="text-muted-foreground mb-1 block text-sm">Min Stake</label>
-          <input
-            type="number"
-            step="any"
-            value={minAmount}
-            onChange={(e) => setMinAmount(e.target.value)}
-            required
-            className="bg-muted border-border focus:border-accent w-full rounded-lg border px-3 py-2.5 text-sm outline-none"
-          />
-          {ethPrice && parseFloat(minAmount) > 0 && (
-            <p className="text-muted-foreground mt-1 text-xs">
-              ≈ ${(parseFloat(minAmount) * ethPrice).toFixed(2)} USD
-            </p>
-          )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="text-muted-foreground mb-1 block text-sm">Arbiter Fee (bps)</label>
-          <input
-            type="number"
-            value={arbiterFee}
-            onChange={(e) => setArbiterFee(e.target.value)}
-            min="0"
-            max="200"
-            required
-            className="bg-muted border-border focus:border-accent w-full rounded-lg border px-3 py-2.5 text-sm outline-none"
-          />
-        </div>
-        <div>
-          <label className="text-muted-foreground mb-1 block text-sm">End Date</label>
-          <input
-            type="datetime-local"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            required
-            className="bg-muted border-border focus:border-accent w-full rounded-lg border px-3 py-2.5 text-sm outline-none"
-          />
-        </div>
-      </div>
-
-      {error && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
-          {error}
-        </div>
-      )}
-
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="bg-accent w-full rounded-xl py-3 font-semibold text-white disabled:opacity-50"
-      >
-        {buttonLabel}
-      </button>
-    </form>
+          <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
+            {buttonLabel}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
 

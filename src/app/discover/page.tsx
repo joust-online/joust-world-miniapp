@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePools } from "@/hooks/use-pool";
 import { TabNavigation } from "@/components/tab-navigation";
 import { PoolCard } from "@/components/pool-card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const FILTERS = [
   { key: "ACTIVE", label: "Active" },
@@ -19,19 +20,15 @@ export default function DiscoverPage() {
     <main className="px-4 pt-4 pb-20">
       <h1 className="mb-4 text-xl font-bold">Discover</h1>
 
-      <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
-        {FILTERS.map((f) => (
-          <button
-            key={f.key}
-            onClick={() => setFilter(f.key)}
-            className={`rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
-              filter === f.key ? "bg-accent text-white" : "bg-muted text-muted-foreground"
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
+      <Tabs value={filter} onValueChange={setFilter} className="mb-4">
+        <TabsList className="w-full">
+          {FILTERS.map((f) => (
+            <TabsTrigger key={f.key} value={f.key} className="flex-1">
+              {f.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {isLoading ? (
         <div className="text-muted-foreground py-8 text-center">Loading...</div>
