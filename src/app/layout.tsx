@@ -16,11 +16,11 @@ import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Joust",
-  description: "Prediction markets powered by World ID",
+  description: "Hypersocial media powered by World ID",
   metadataBase: new URL("https://joust-online.com"),
   openGraph: {
     title: "Joust",
-    description: "Prediction markets powered by World ID",
+    description: "Hypersocial media powered by World ID",
     url: "https://joust-online.com",
     siteName: "Joust",
     type: "website",

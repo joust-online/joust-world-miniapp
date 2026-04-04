@@ -301,9 +301,7 @@ export default function CreatePage() {
   return (
     <main className="pb-20 px-4 pt-4">
       <h1 className="text-xl font-bold mb-4">Create Pool</h1>
-      <WorldIdGate level="orb" action="create-pool">
-        <CreatePoolForm />
-      </WorldIdGate>
+      <CreatePoolForm />
       <TabNavigation />
     </main>
   );

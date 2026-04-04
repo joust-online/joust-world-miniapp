@@ -7,6 +7,7 @@ import { useSession } from "@/hooks/use-profile";
 import { useEthPrice } from "@/hooks/use-eth-price";
 import { useTransaction } from "@/hooks/use-transaction";
 import { WorldIdGate } from "@/components/world-id-gate";
+import { VerificationBadge } from "@/components/verification-badge";
 import { formatAmount, shortenAddress } from "@/lib/utils";
 import { getCollateralInfo, ETH_ADDRESS } from "@/lib/contracts";
 import { sharePool, shareContacts, closeMiniApp, sendHaptic, sendTransaction, sendERC20Transaction } from "@/lib/minikit";
@@ -310,6 +311,19 @@ export default function PoolDetailPage() {
 
       <PoolLifecycleBar state={pool.state} />
 
+      {/* Arbiter World ID trust banner */}
+      {pool.arbiter?.worldIdLevel === "orb" ? (
+        <div className="flex items-center gap-2 rounded-xl bg-green-500/10 border border-green-500/30 px-4 py-2.5 mb-4 text-sm text-green-400">
+          <span className="text-base">&#x2714;</span>
+          <span className="font-medium">Arbitrated by Orb-verified human</span>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-2.5 mb-4 text-sm text-red-400">
+          <span className="text-base">&#x26A0;</span>
+          <span className="font-medium">Arbiter not verified with World ID</span>
+        </div>
+      )}
+
       <div className="flex items-center gap-3 mb-4 text-xs text-muted-foreground">
         <span className={`font-medium ${statusDisplay.color}`}>
           {statusDisplay.text}
@@ -351,7 +365,7 @@ export default function PoolDetailPage() {
 
       {/* Joust Form */}
       {isActive && session?.authenticated && (
-        <WorldIdGate level="device">
+        <>
           {showJoust ? (
             <div className="bg-card rounded-xl border border-border p-4 mb-4">
               <h3 className="font-semibold text-sm mb-3">Stake Prediction</h3>
@@ -403,7 +417,7 @@ export default function PoolDetailPage() {
               Stake Prediction
             </button>
           )}
-        </WorldIdGate>
+        </>
       )}
 
       {/* Share / Invite / Done Actions */}
@@ -428,8 +442,9 @@ export default function PoolDetailPage() {
         </button>
       </div>
 
-      {/* Arbiter Panel */}
+      {/* Arbiter Panel — requires Orb verification */}
       {showArbiterPanel && session?.authenticated && (
+        <WorldIdGate level="orb" action="verify-identity">
         <div className="bg-card rounded-xl border border-accent/30 p-4 mb-4">
           <h3 className="font-semibold text-sm mb-3 text-accent">Arbiter Actions</h3>
 
@@ -511,15 +526,17 @@ export default function PoolDetailPage() {
             )}
           </div>
         </div>
+        </WorldIdGate>
       )}
 
       {/* Arbiter Info */}
       <div className="bg-card rounded-xl border border-border p-3 mb-4">
         <div className="text-xs text-muted-foreground mb-1">Arbiter</div>
         <div className="flex items-center justify-between">
-          <span className="text-sm">
+          <span className="text-sm flex items-center gap-1.5">
             {pool.arbiter?.username ?? shortenAddress(pool.arbiterAddress)}
-            {isArbiter && <span className="text-xs text-accent ml-1.5">(you)</span>}
+            <VerificationBadge level={pool.arbiter?.worldIdLevel} />
+            {isArbiter && <span className="text-xs text-accent ml-0.5">(you)</span>}
           </span>
           <span className="text-xs text-muted-foreground">
             {pool.arbiterAccepted ? "Accepted" : "Pending"} &middot; {pool.arbiterFee / 100}% fee
@@ -534,7 +551,10 @@ export default function PoolDetailPage() {
           <div className="space-y-1.5">
             {pool.jousts.slice(0, 10).map((joust: any) => (
               <div key={joust.id} className="flex items-center justify-between text-xs bg-card rounded-lg border border-border p-2.5">
-                <span>{joust.user?.username ?? shortenAddress(joust.user?.address ?? "")}</span>
+                <span className="flex items-center gap-1">
+                  {joust.user?.username ?? shortenAddress(joust.user?.address ?? "")}
+                  <VerificationBadge level={joust.user?.worldIdLevel} />
+                </span>
                 <span className="text-muted-foreground">
                   {pool.options?.find((o: any) => o.joustType === joust.joustType)?.label}
                 </span>

@@ -6,6 +6,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { TabNavigation } from "@/components/tab-navigation";
 import { PoolCard } from "@/components/pool-card";
 import { AuthButton } from "@/components/auth-button";
+import { VerificationBadge } from "@/components/verification-badge";
+import { runWorldIdVerification } from "@/lib/world-id-verify";
 import { shortenAddress } from "@/lib/utils";
 
 function resizeImage(file: File, maxSize: number): Promise<string> {
@@ -45,6 +47,11 @@ export default function ProfilePage() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [newUsername, setNewUsername] = useState("");
+  const [savingName, setSavingName] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
   const { data: myPoolsData } = useQuery({
     queryKey: ["pools", "my"],
     queryFn: async () => {
@@ -127,19 +134,99 @@ export default function ProfilePage() {
                 <span className="text-xs text-white">{uploading ? "..." : "Edit"}</span>
               </div>
             </button>
-            <h2 className="font-semibold">{user.username}</h2>
+            {editingName ? (
+              <div className="flex items-center justify-center gap-2 mt-1 mb-1">
+                <input
+                  value={newUsername}
+                  onChange={(e) => setNewUsername(e.target.value)}
+                  maxLength={50}
+                  autoFocus
+                  className="bg-muted rounded-lg px-2 py-1 text-sm border border-border outline-none text-center w-36"
+                  onKeyDown={async (e) => {
+                    if (e.key === "Enter" && newUsername.trim()) {
+                      setSavingName(true);
+                      const res = await fetch("/api/profile", {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ username: newUsername.trim() }),
+                      });
+                      if (res.ok) {
+                        queryClient.invalidateQueries({ queryKey: ["profile"] });
+                        queryClient.invalidateQueries({ queryKey: ["session"] });
+                      }
+                      setSavingName(false);
+                      setEditingName(false);
+                    }
+                    if (e.key === "Escape") setEditingName(false);
+                  }}
+                />
+                <button
+                  onClick={() => setEditingName(false)}
+                  className="text-xs text-muted-foreground"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => { setNewUsername(user.username); setEditingName(true); }}
+                className="font-semibold hover:text-accent transition-colors"
+              >
+                {user.username} <span className="text-xs text-muted-foreground">✏️</span>
+              </button>
+            )}
             <p className="text-xs text-muted-foreground">{shortenAddress(user.address)}</p>
             <div className="flex items-center justify-center gap-2 mt-2">
-              {user.worldIdVerified && (
-                <span className={`text-xs px-2 py-0.5 rounded-full ${
-                  user.worldIdLevel === "orb"
-                    ? "bg-accent/20 text-accent"
-                    : "bg-blue-500/20 text-blue-400"
-                }`}>
-                  {user.worldIdLevel === "orb" ? "🔮 Orb Verified" : "📱 Device Verified"}
-                </span>
-              )}
+              <VerificationBadge level={user.worldIdLevel} size="lg" />
             </div>
+          </div>
+
+          {/* World ID Verification Section */}
+          <div className="bg-card rounded-xl border border-border p-4">
+            <h3 className="font-semibold text-sm mb-3">World ID Verification</h3>
+            {user.worldIdVerified ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <VerificationBadge level={user.worldIdLevel} size="md" />
+                  <span className="text-sm text-muted-foreground">
+                    {user.worldIdLevel === "orb" ? "Orb-level proof of unique human" : "Device-level verification"}
+                  </span>
+                </div>
+                {user.worldIdVerifiedAt && (
+                  <p className="text-xs text-muted-foreground">
+                    Verified on {new Date(user.worldIdVerifiedAt).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Verify with World ID to prove you are a unique human. Build trust as an arbiter and unlock the full Joust experience.
+                </p>
+                {verifyError && (
+                  <p className="text-xs text-destructive">{verifyError}</p>
+                )}
+                <button
+                  onClick={async () => {
+                    setVerifying(true);
+                    setVerifyError(null);
+                    try {
+                      await runWorldIdVerification("verify-identity");
+                      queryClient.invalidateQueries({ queryKey: ["session"] });
+                      queryClient.invalidateQueries({ queryKey: ["profile"] });
+                    } catch (err) {
+                      setVerifyError(err instanceof Error ? err.message : "Verification failed");
+                    } finally {
+                      setVerifying(false);
+                    }
+                  }}
+                  disabled={verifying}
+                  className="w-full py-2.5 bg-accent text-white rounded-xl font-medium text-sm disabled:opacity-50"
+                >
+                  {verifying ? "Verifying..." : "Verify with World ID"}
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-3 gap-3">

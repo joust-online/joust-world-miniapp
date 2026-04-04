@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Joust",
     short_name: "Joust",
-    description: "Prediction markets powered by World ID",
+    description: "Hypersocial media powered by World ID",
     start_url: "/",
     display: "standalone",
     background_color: "#191919",
