@@ -39,7 +39,8 @@ export function PoolCard({ pool }: PoolCardProps) {
     : pool.totalAmountJousted;
   const state = getDisplayState(pool.state, pool.endTime, pool._count.jousts);
   const expired = new Date(pool.endTime) < new Date();
-  const timeLabel = expired ? `Ended ${formatDistanceToNow(new Date(pool.endTime), { addSuffix: true })}` : `Ends ${formatDistanceToNow(new Date(pool.endTime), { addSuffix: true })}`;
+  const timeDistance = formatDistanceToNow(new Date(pool.endTime), { addSuffix: true });
+  const timeLabel = expired ? `Ended ${timeDistance}` : `Ends ${timeDistance}`;
 
   return (
     <Link href={`/pool/${pool.id}`} className="block">

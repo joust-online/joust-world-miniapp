@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { usePool, useRecordTx } from "@/hooks/use-pool";
 import { useSession } from "@/hooks/use-profile";
+import { useEthPrice } from "@/hooks/use-eth-price";
 import { useTransaction } from "@/hooks/use-transaction";
 import { WorldIdGate } from "@/components/world-id-gate";
 import { formatAmount, shortenAddress } from "@/lib/utils";
@@ -16,6 +17,16 @@ import { useQueryClient } from "@tanstack/react-query";
 
 /* ── Pool lifecycle stages ── */
 const LIFECYCLE_STAGES = ["PENDING", "ACTIVE", "CLOSED", "SETTLED"] as const;
+
+function getPoolStatusDisplay(state: string, expired: boolean, joustCount: number): { text: string; color: string } {
+  if (state === "SETTLED") return { text: "SETTLED", color: "text-blue-400" };
+  if (state === "REFUNDED") return { text: "REFUNDED", color: "text-red-400" };
+  if (expired && joustCount > 0) return { text: "AWAITING SETTLEMENT", color: "text-yellow-400" };
+  if (expired) return { text: "EXPIRED", color: "text-red-400" };
+  if (state === "ACTIVE") return { text: "ACTIVE", color: "text-green-400" };
+  if (state === "CLOSED") return { text: "CLOSED", color: "text-orange-400" };
+  return { text: state, color: "" };
+}
 
 function PoolLifecycleBar({ state }: { state: string }) {
   const currentIdx = LIFECYCLE_STAGES.indexOf(state as typeof LIFECYCLE_STAGES[number]);
@@ -74,6 +85,19 @@ function PoolLifecycleBar({ state }: { state: string }) {
 }
 
 /* ── Transaction feedback banner ── */
+const TX_BANNER_STYLES: Record<string, string> = {
+  pending: "bg-yellow-500/10 border border-yellow-500/30 text-yellow-300",
+  confirming: "bg-yellow-500/10 border border-yellow-500/30 text-yellow-300",
+  success: "bg-green-500/10 border border-green-500/30 text-green-300",
+  error: "bg-red-500/10 border border-red-500/30 text-red-300",
+};
+
+const TX_BANNER_TEXT: Record<string, string> = {
+  pending: "Sending transaction...",
+  confirming: "Confirming on chain...",
+  success: "Transaction confirmed!",
+};
+
 function TxBanner({ status, error, onReset }: {
   status: string;
   error: string | null;
@@ -81,21 +105,13 @@ function TxBanner({ status, error, onReset }: {
 }) {
   if (status === "idle") return null;
 
+  const message = status === "error" ? (error ?? "Transaction failed") : TX_BANNER_TEXT[status];
+  const dismissable = status === "success" || status === "error";
+
   return (
-    <div className={`rounded-xl px-4 py-3 mb-3 text-sm flex items-center justify-between ${
-      status === "pending" || status === "confirming"
-        ? "bg-yellow-500/10 border border-yellow-500/30 text-yellow-300"
-        : status === "success"
-        ? "bg-green-500/10 border border-green-500/30 text-green-300"
-        : "bg-red-500/10 border border-red-500/30 text-red-300"
-    }`}>
-      <span>
-        {status === "pending" && "Sending transaction..."}
-        {status === "confirming" && "Confirming on chain..."}
-        {status === "success" && "Transaction confirmed!"}
-        {status === "error" && (error ?? "Transaction failed")}
-      </span>
-      {(status === "success" || status === "error") && (
+    <div className={`rounded-xl px-4 py-3 mb-3 text-sm flex items-center justify-between ${TX_BANNER_STYLES[status]}`}>
+      <span>{message}</span>
+      {dismissable && (
         <button onClick={onReset} className="ml-3 text-xs underline opacity-70 hover:opacity-100">
           Dismiss
         </button>
@@ -117,7 +133,7 @@ export default function PoolDetailPage() {
 
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [amount, setAmount] = useState("");
-  const [ethPrice, setEthPrice] = useState<number | null>(null);
+  const ethPrice = useEthPrice();
   const [showJoust, setShowJoust] = useState(false);
 
   // Auto-fill min stake amount when pool loads
@@ -132,14 +148,6 @@ export default function PoolDetailPage() {
       setAmountInitialized(true);
     }
   }, [data?.pool, amountInitialized]);
-
-  // Fetch ETH price for USD display
-  useEffect(() => {
-    fetch("https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd")
-      .then((r) => r.json())
-      .then((d) => setEthPrice(d.ethereum?.usd ?? null))
-      .catch(() => {});
-  }, []);
 
   // Settle flow state
   const [showSettlePicker, setShowSettlePicker] = useState(false);
@@ -283,6 +291,9 @@ export default function PoolDetailPage() {
   const canSettlePool = isArbiter && pool.arbiterAccepted && pool.state === "CLOSED";
   const canRefundPool = isArbiter && pool.arbiterAccepted && (pool.state === "ACTIVE" || pool.state === "CLOSED");
   const showArbiterPanel = isArbiter && (canAcceptArbiter || canClosePool || canSettlePool || canRefundPool);
+  const arbiterBusy = arbiterTx.status === "pending" || arbiterTx.status === "confirming";
+
+  const statusDisplay = getPoolStatusDisplay(pool.state, expired, pool._count?.jousts ?? 0);
 
   return (
     <main className="pb-20 px-4 pt-4">
@@ -297,22 +308,11 @@ export default function PoolDetailPage() {
         )}
       </div>
 
-      {/* Lifecycle Status Bar */}
       <PoolLifecycleBar state={pool.state} />
 
       <div className="flex items-center gap-3 mb-4 text-xs text-muted-foreground">
-        <span className={`font-medium ${
-          pool.state === "SETTLED" ? "text-blue-400" :
-          pool.state === "REFUNDED" ? "text-red-400" :
-          expired ? (pool._count?.jousts > 0 ? "text-yellow-400" : "text-red-400") :
-          pool.state === "ACTIVE" ? "text-green-400" :
-          pool.state === "CLOSED" ? "text-orange-400" : ""
-        }`}>
-          {pool.state === "SETTLED" ? "SETTLED" :
-           pool.state === "REFUNDED" ? "REFUNDED" :
-           expired && pool._count?.jousts > 0 ? "AWAITING SETTLEMENT" :
-           expired ? "EXPIRED" :
-           pool.state}
+        <span className={`font-medium ${statusDisplay.color}`}>
+          {statusDisplay.text}
         </span>
         <span>{formatAmount(total, collateral.decimals)} {collateral.symbol}</span>
         <span>{pool._count?.jousts ?? 0} predictions</span>
@@ -386,11 +386,9 @@ export default function PoolDetailPage() {
                     disabled={!amount || joustTx.status === "pending" || joustTx.status === "confirming" || contractId == null}
                     className="w-full py-2.5 bg-accent text-white rounded-xl font-medium text-sm disabled:opacity-50"
                   >
-                    {joustTx.status === "pending"
-                      ? "Sending..."
-                      : joustTx.status === "confirming"
-                      ? "Confirming..."
-                      : "Stake Prediction"}
+                    {joustTx.status === "pending" && "Sending..."}
+                    {joustTx.status === "confirming" && "Confirming..."}
+                    {joustTx.status !== "pending" && joustTx.status !== "confirming" && "Stake Prediction"}
                   </button>
                 </>
               ) : (
@@ -423,7 +421,7 @@ export default function PoolDetailPage() {
           Invite Friends
         </button>
         <button
-          onClick={() => closeMiniApp()}
+          onClick={closeMiniApp}
           className="flex-1 py-2 bg-muted rounded-xl text-sm text-center"
         >
           Done
@@ -441,24 +439,20 @@ export default function PoolDetailPage() {
             {canAcceptArbiter && (
               <button
                 onClick={handleAcceptArbiter}
-                disabled={arbiterTx.status === "pending" || arbiterTx.status === "confirming"}
+                disabled={arbiterBusy}
                 className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium text-sm disabled:opacity-50 transition-colors"
               >
-                {arbiterTx.status === "pending" || arbiterTx.status === "confirming"
-                  ? "Processing..."
-                  : "Accept Arbiter Role"}
+                {arbiterBusy ? "Processing..." : "Accept Arbiter Role"}
               </button>
             )}
 
             {canClosePool && (
               <button
                 onClick={handleClosePool}
-                disabled={arbiterTx.status === "pending" || arbiterTx.status === "confirming"}
+                disabled={arbiterBusy}
                 className="w-full py-2.5 bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl font-medium text-sm disabled:opacity-50 transition-colors"
               >
-                {arbiterTx.status === "pending" || arbiterTx.status === "confirming"
-                  ? "Processing..."
-                  : "Close Pool"}
+                {arbiterBusy ? "Processing..." : "Close Pool"}
               </button>
             )}
 
@@ -482,12 +476,10 @@ export default function PoolDetailPage() {
                     ))}
                     <button
                       onClick={handleSettlePool}
-                      disabled={settleOption == null || arbiterTx.status === "pending" || arbiterTx.status === "confirming"}
+                      disabled={settleOption == null || arbiterBusy}
                       className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium text-sm disabled:opacity-50 transition-colors mt-2"
                     >
-                      {arbiterTx.status === "pending" || arbiterTx.status === "confirming"
-                        ? "Processing..."
-                        : "Confirm Settlement"}
+                      {arbiterBusy ? "Processing..." : "Confirm Settlement"}
                     </button>
                     <button
                       onClick={() => { setShowSettlePicker(false); setSettleOption(null); }}
@@ -499,7 +491,7 @@ export default function PoolDetailPage() {
                 ) : (
                   <button
                     onClick={() => setShowSettlePicker(true)}
-                    disabled={arbiterTx.status === "pending" || arbiterTx.status === "confirming"}
+                    disabled={arbiterBusy}
                     className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium text-sm disabled:opacity-50 transition-colors"
                   >
                     Settle Pool
@@ -511,12 +503,10 @@ export default function PoolDetailPage() {
             {canRefundPool && (
               <button
                 onClick={handleRefundPool}
-                disabled={arbiterTx.status === "pending" || arbiterTx.status === "confirming"}
+                disabled={arbiterBusy}
                 className="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium text-sm disabled:opacity-50 transition-colors"
               >
-                {arbiterTx.status === "pending" || arbiterTx.status === "confirming"
-                  ? "Processing..."
-                  : "Refund Pool"}
+                {arbiterBusy ? "Processing..." : "Refund Pool"}
               </button>
             )}
           </div>

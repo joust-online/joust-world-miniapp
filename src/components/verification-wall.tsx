@@ -3,11 +3,8 @@
 import { useState } from "react";
 import { useSession } from "@/hooks/use-profile";
 import { MiniKit } from "@worldcoin/minikit-js";
-import { IDKit, orbLegacy } from "@worldcoin/idkit-core";
+import { runWorldIdVerification } from "@/lib/world-id-verify";
 import { useQueryClient } from "@tanstack/react-query";
-
-const APP_ID = process.env.NEXT_PUBLIC_APP_ID!;
-const RP_ID = process.env.NEXT_PUBLIC_RP_ID!;
 
 export function VerificationWall({ children }: { children: React.ReactNode }) {
   const { data: session, isLoading } = useSession();
@@ -34,49 +31,8 @@ export function VerificationWall({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
       try {
-        // Step 1: Get RP signature from our backend
-        const rpSig = await fetch("/api/worldid/rp-context", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "verify-identity" }),
-        }).then((r) => r.json());
-
-        // Step 2: Create IDKit request with RP signature
-        const request = await IDKit.request({
-          app_id: APP_ID as `app_${string}`,
-          action: "verify-identity",
-          rp_context: {
-            rp_id: RP_ID,
-            nonce: rpSig.nonce,
-            created_at: rpSig.created_at,
-            expires_at: rpSig.expires_at,
-            signature: rpSig.sig,
-          },
-          allow_legacy_proofs: true,
-          environment: "production",
-        }).preset(orbLegacy());
-
-        // Step 3: Poll until user completes verification in World App
-        const completion = await request.pollUntilCompletion({ timeout: 120000 });
-        if (!completion.success) {
-          throw new Error("Verification timed out or was cancelled");
-        }
-
-        // Step 4: Send proof to our backend for verification
-        const res = await fetch("/api/worldid/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            idkitResponse: completion.result,
-            action: "verify-identity",
-          }),
-        });
-        if (res.ok) {
-          queryClient.invalidateQueries({ queryKey: ["session"] });
-        } else {
-          const err = await res.json();
-          throw new Error(err.error ?? "Verification failed on server");
-        }
+        await runWorldIdVerification("verify-identity");
+        queryClient.invalidateQueries({ queryKey: ["session"] });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Verification failed");
       } finally {

@@ -5,6 +5,34 @@ import { requireSession } from "@/lib/session";
 import { publicClient } from "@/lib/viem-server";
 import { notifyUser } from "@/lib/notifications";
 
+/** Notify all unique jousters in a pool. */
+async function notifyAllJousters(
+  poolId: string,
+  type: string,
+  title: string,
+  body: string,
+): Promise<void> {
+  const jousts = await prisma.joust.findMany({
+    where: { poolId },
+    include: { user: { select: { id: true, address: true } } },
+  });
+  const notifiedUserIds = new Set<number>();
+  for (const j of jousts) {
+    if (notifiedUserIds.has(j.user.id)) continue;
+    notifiedUserIds.add(j.user.id);
+    await notifyUser(
+      prisma,
+      j.user.id,
+      type,
+      title,
+      body,
+      poolId,
+      j.user.address,
+      `/pool/${poolId}`,
+    );
+  }
+}
+
 const recordTxSchema = z.object({
   txHash: z.string().regex(/^0x[a-fA-F0-9]{64}$/),
   action: z.enum(["deploy", "accept-arbiter", "close", "settle", "refund"]),
@@ -112,28 +140,7 @@ export async function POST(
           data: { isWinner: true },
         });
 
-        // Notify all jousters that the pool has been settled
-        {
-          const settleJousts = await prisma.joust.findMany({
-            where: { poolId: id },
-            include: { user: { select: { id: true, address: true } } },
-          });
-          const notifiedUserIds = new Set<number>();
-          for (const j of settleJousts) {
-            if (notifiedUserIds.has(j.user.id)) continue;
-            notifiedUserIds.add(j.user.id);
-            await notifyUser(
-              prisma,
-              j.user.id,
-              "POOL_SETTLED",
-              "Pool Settled",
-              `The pool "${pool.title}" has been settled.`,
-              id,
-              j.user.address,
-              `/pool/${id}`,
-            );
-          }
-        }
+        await notifyAllJousters(id, "POOL_SETTLED", "Pool Settled", `The pool "${pool.title}" has been settled.`);
         break;
 
       case "refund":
@@ -142,28 +149,7 @@ export async function POST(
           data: { state: "REFUNDED", refundedAt: new Date() },
         });
 
-        // Notify all jousters that the pool has been refunded
-        {
-          const refundJousts = await prisma.joust.findMany({
-            where: { poolId: id },
-            include: { user: { select: { id: true, address: true } } },
-          });
-          const notifiedUserIds = new Set<number>();
-          for (const j of refundJousts) {
-            if (notifiedUserIds.has(j.user.id)) continue;
-            notifiedUserIds.add(j.user.id);
-            await notifyUser(
-              prisma,
-              j.user.id,
-              "POOL_REFUNDED",
-              "Pool Refunded",
-              `The pool "${pool.title}" has been refunded.`,
-              id,
-              j.user.address,
-              `/pool/${id}`,
-            );
-          }
-        }
+        await notifyAllJousters(id, "POOL_REFUNDED", "Pool Refunded", `The pool "${pool.title}" has been refunded.`);
         break;
     }
 
