@@ -1,6 +1,23 @@
 import { MiniKit } from "@worldcoin/minikit-js";
-import { JOUST_ARENA_ADDRESS, USDC_ADDRESS, ETH_ADDRESS } from "./contracts";
+import { encodeFunctionData } from "viem";
+import { JOUST_ARENA_ADDRESS, USDC_ADDRESS } from "./contracts";
 import { joustArenaAbi } from "./abi";
+
+const PERMIT2 = "0x000000000022D473030F116dDEE9F6B43aC78BA3";
+const PERMIT2_APPROVE_ABI = [
+  {
+    name: "approve",
+    type: "function",
+    inputs: [
+      { name: "token", type: "address" },
+      { name: "spender", type: "address" },
+      { name: "amount", type: "uint160" },
+      { name: "expiration", type: "uint48" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+] as const;
 
 export function isMiniKitAvailable(): boolean {
   return MiniKit.isInstalled();
@@ -15,13 +32,18 @@ export async function sendTransaction(
     throw new Error("MiniKit not available. Open this app in World App.");
   }
 
+  const data = encodeFunctionData({
+    abi: joustArenaAbi,
+    functionName,
+    args,
+  });
+
   const result = await MiniKit.sendTransaction({
-    transaction: [
+    chainId: 480,
+    transactions: [
       {
-        address: JOUST_ARENA_ADDRESS,
-        abi: joustArenaAbi,
-        functionName,
-        args,
+        to: JOUST_ARENA_ADDRESS,
+        data,
         ...(value ? { value: value.toString() } : {}),
       },
     ],
@@ -43,25 +65,23 @@ export async function sendERC20Transaction(
     throw new Error("MiniKit not available. Open this app in World App.");
   }
 
+  const approveData = encodeFunctionData({
+    abi: PERMIT2_APPROVE_ABI,
+    functionName: "approve",
+    args: [tokenAddress as `0x${string}`, JOUST_ARENA_ADDRESS, amount, 0],
+  });
+
+  const txData = encodeFunctionData({
+    abi: joustArenaAbi,
+    functionName,
+    args,
+  });
+
   const result = await MiniKit.sendTransaction({
-    transaction: [
-      {
-        address: JOUST_ARENA_ADDRESS,
-        abi: joustArenaAbi,
-        functionName,
-        args,
-      },
-    ],
-    permit2: [
-      {
-        permitted: {
-          token: tokenAddress,
-          amount: amount.toString(),
-        },
-        spender: JOUST_ARENA_ADDRESS,
-        nonce: Date.now().toString(),
-        deadline: Math.floor(Date.now() / 1000 + 30 * 60).toString(),
-      },
+    chainId: 480,
+    transactions: [
+      { to: PERMIT2, data: approveData },
+      { to: JOUST_ARENA_ADDRESS, data: txData },
     ],
   });
 

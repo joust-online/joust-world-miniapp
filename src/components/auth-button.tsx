@@ -39,7 +39,7 @@ export function AuthButton({ large }: { large?: boolean }) {
 
         if (MiniKit.isInstalled()) {
           try {
-            await MiniKit.requestPermission({ permission: "notifications" });
+            await MiniKit.requestPermission({ permission: "notifications" as any });
           } catch {}
         }
       }

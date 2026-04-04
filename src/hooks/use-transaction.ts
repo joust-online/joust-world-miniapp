@@ -14,12 +14,12 @@ export function useTransaction() {
   const receipt = useWaitForTransactionReceipt({ hash: txHash });
 
   const execute = useCallback(
-    async (txFn: () => Promise<{ transaction_id: string }>) => {
+    async (txFn: () => Promise<any>) => {
       setStatus("pending");
       setError(null);
       try {
         const result = await txFn();
-        const hash = result.transaction_id as `0x${string}`;
+        const hash = (result.transaction_id ?? result.transactionId ?? result) as `0x${string}`;
         setTxHash(hash);
         setStatus("confirming");
         sendHaptic("heavy");
