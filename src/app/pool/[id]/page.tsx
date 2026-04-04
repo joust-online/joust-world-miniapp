@@ -121,14 +121,17 @@ export default function PoolDetailPage() {
   const [showJoust, setShowJoust] = useState(false);
 
   // Auto-fill min stake amount when pool loads
+  const [amountInitialized, setAmountInitialized] = useState(false);
   useEffect(() => {
-    if (data?.pool && !amount) {
-      const pool = data.pool;
-      const collateral = getCollateralInfo(pool.collateral);
-      const min = formatAmount(BigInt(pool.minJoustAmount?.toString() ?? "0"), collateral.decimals);
-      setAmount(min);
+    if (data?.pool && !amountInitialized) {
+      const c = getCollateralInfo(data.pool.collateral);
+      const min = formatAmount(BigInt(data.pool.minJoustAmount?.toString() ?? "0"), c.decimals);
+      if (min && min !== "0") {
+        setAmount(min);
+      }
+      setAmountInitialized(true);
     }
-  }, [data?.pool]);
+  }, [data?.pool, amountInitialized]);
 
   // Fetch ETH price for USD display
   useEffect(() => {
