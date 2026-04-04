@@ -51,6 +51,19 @@ export async function sendTransaction(
   return result.data;
 }
 
+const ERC20_APPROVE_ABI = [
+  {
+    name: "approve",
+    type: "function",
+    inputs: [
+      { name: "spender", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+    stateMutability: "nonpayable",
+  },
+] as const;
+
 export async function sendERC20Transaction(
   functionName: string,
   args: unknown[],
@@ -61,12 +74,21 @@ export async function sendERC20Transaction(
     throw new Error("MiniKit not available. Open this app in World App.");
   }
 
-  const approveData = encodeFunctionData({
+  // Step 1: Permit2 approve the token to JoustArena (World App uses Permit2 internally)
+  const permit2ApproveData = encodeFunctionData({
     abi: PERMIT2_APPROVE_ABI,
     functionName: "approve",
     args: [tokenAddress as `0x${string}`, JOUST_ARENA_ADDRESS, amount, 0],
   });
 
+  // Step 2: Standard ERC20 approve JoustArena to pull tokens
+  const erc20ApproveData = encodeFunctionData({
+    abi: ERC20_APPROVE_ABI,
+    functionName: "approve",
+    args: [JOUST_ARENA_ADDRESS, amount],
+  });
+
+  // Step 3: The actual contract call
   const txData = encodeFunctionData({
     abi: joustArenaAbi,
     functionName,
@@ -76,7 +98,8 @@ export async function sendERC20Transaction(
   const result = await MiniKit.sendTransaction({
     chainId: 480,
     transactions: [
-      { to: PERMIT2, data: approveData },
+      { to: PERMIT2, data: permit2ApproveData },
+      { to: tokenAddress as `0x${string}`, data: erc20ApproveData },
       { to: JOUST_ARENA_ADDRESS, data: txData },
     ],
   });
