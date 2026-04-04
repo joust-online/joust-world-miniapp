@@ -17,9 +17,9 @@ interface Pool {
   arbiterAccepted: boolean;
   winningJoustType: number;
   options: { id: number; joustType: number; label: string; orderIndex: number }[];
-  jousts: { id: number; joustType: number; amount: bigint; user?: { id: number; username: string; address: string } }[];
-  creator: { id: number; username: string; address: string };
-  arbiter?: { id: number; username: string; address: string };
+  jousts: { id: number; joustType: number; amount: bigint; user?: { id: number; username: string; address: string; worldIdLevel?: string | null } }[];
+  creator: { id: number; username: string; address: string; worldIdLevel?: string | null };
+  arbiter?: { id: number; username: string; address: string; worldIdLevel?: string | null };
   _count: { jousts: number };
 }
 

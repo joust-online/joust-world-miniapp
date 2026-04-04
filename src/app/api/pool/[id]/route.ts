@@ -14,7 +14,7 @@ export async function GET(
       options: { orderBy: { orderIndex: "asc" } },
       jousts: {
         include: {
-          user: { select: { id: true, username: true, address: true } },
+          user: { select: { id: true, username: true, address: true, worldIdLevel: true } },
         },
         orderBy: { createdAt: "desc" },
       },

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useSession } from "@/hooks/use-profile";
 import { MiniKit } from "@worldcoin/minikit-js";
-import { runWorldIdVerification } from "@/lib/world-id-verify";
 import { useQueryClient } from "@tanstack/react-query";
 
 export function VerificationWall({ children }: { children: React.ReactNode }) {
@@ -20,59 +19,9 @@ export function VerificationWall({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Authenticated and has at least device verification — show the app
-  if (session?.authenticated && session.user.worldIdVerified) {
+  // Authenticated — let them through (verified or not)
+  if (session?.authenticated) {
     return <>{children}</>;
-  }
-
-  // Authenticated but not verified — show verify step
-  if (session?.authenticated && !session.user.worldIdVerified) {
-    const handleVerify = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        await runWorldIdVerification("verify-identity");
-        queryClient.invalidateQueries({ queryKey: ["session"] });
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Verification failed");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-transparent px-6 text-center">
-        <div className="w-20 h-20 rounded-full bg-accent/20 flex items-center justify-center text-4xl mb-6">
-          🌐
-        </div>
-        <h1 className="text-2xl font-bold mb-2">Verify You&apos;re Human</h1>
-        <p className="text-muted-foreground mb-2 max-w-xs">
-          Joust uses World ID to ensure every prediction comes from a real person — not bots or Sybil accounts.
-        </p>
-        <div className="bg-card border border-border rounded-xl p-4 mb-6 max-w-xs w-full text-left">
-          <h3 className="text-sm font-semibold mb-2">Why World ID?</h3>
-          <ul className="text-xs text-muted-foreground space-y-1.5">
-            <li>One person, one vote on arbiter reputation</li>
-            <li>Fair rate limits prevent market manipulation</li>
-            <li>Orb verification unlocks pool creation & arbitration</li>
-            <li>Device verification lets you start predicting</li>
-          </ul>
-        </div>
-        {error && (
-          <p className="text-xs text-destructive mb-3">{error}</p>
-        )}
-        <button
-          onClick={handleVerify}
-          disabled={loading}
-          className="px-8 py-3 bg-accent text-white rounded-full font-semibold text-base disabled:opacity-50 mb-3"
-        >
-          {loading ? "Verifying..." : "Verify with World ID"}
-        </button>
-        <p className="text-[11px] text-muted-foreground">
-          Powered by World ID 4.0 — proof of unique human
-        </p>
-      </div>
-    );
   }
 
   // Not authenticated — show sign-in

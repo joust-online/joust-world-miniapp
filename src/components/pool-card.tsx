@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { formatAmount } from "@/lib/utils";
 import { getCollateralInfo } from "@/lib/contracts";
+import { VerificationBadge } from "@/components/verification-badge";
 import { formatDistanceToNow } from "date-fns";
 
 interface PoolCardProps {
@@ -55,6 +56,10 @@ export function PoolCard({ pool }: PoolCardProps) {
               {opt.label}
             </span>
           ))}
+        </div>
+        <div className="flex items-center gap-1.5 mb-2 text-xs text-muted-foreground">
+          <span>by {pool.creator.username}</span>
+          <VerificationBadge level={pool.creator.worldIdLevel} />
         </div>
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>{formatAmount(total, collateral.decimals)} {collateral.symbol} pooled</span>

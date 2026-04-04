@@ -5,6 +5,7 @@ import { usePools } from "@/hooks/use-pool";
 import { useMyJousts } from "@/hooks/use-joust";
 import { TabNavigation } from "@/components/tab-navigation";
 import { PoolCard } from "@/components/pool-card";
+import { VerificationBadge } from "@/components/verification-badge";
 import { NotificationBell } from "@/components/notification-bell";
 import Link from "next/link";
 
@@ -21,6 +22,31 @@ export default function HomePage() {
           <NotificationBell />
         </div>
       </div>
+
+      {/* World ID status banner */}
+      {session?.authenticated && (
+        <div className={`flex items-center gap-2 rounded-xl px-4 py-2.5 mb-4 text-sm ${
+          session.user.worldIdLevel === "orb"
+            ? "bg-green-500/10 border border-green-500/30"
+            : session.user.worldIdLevel === "device"
+            ? "bg-blue-500/10 border border-blue-500/30"
+            : "bg-red-500/10 border border-red-500/30"
+        }`}>
+          <VerificationBadge level={session.user.worldIdLevel ?? null} size="md" />
+          <span className="text-muted-foreground text-xs">
+            {session.user.worldIdLevel === "orb"
+              ? "Full access — Orb verified"
+              : session.user.worldIdLevel === "device"
+              ? "Verified with World ID"
+              : "Not verified — verify with World ID for full access"}
+          </span>
+          {!session.user.worldIdVerified && (
+            <Link href="/profile" className="ml-auto text-xs text-accent font-medium">
+              Verify
+            </Link>
+          )}
+        </div>
+      )}
 
       <section className="mb-6">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
