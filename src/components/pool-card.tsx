@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { formatAmount, shortenAddress } from "@/lib/utils";
+import { formatAmount } from "@/lib/utils";
 import { COLLATERAL_TOKENS } from "@/lib/contracts";
 import { formatDistanceToNow } from "date-fns";
 

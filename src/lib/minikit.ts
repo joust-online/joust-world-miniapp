@@ -1,6 +1,6 @@
 import { MiniKit } from "@worldcoin/minikit-js";
 import { encodeFunctionData } from "viem";
-import { JOUST_ARENA_ADDRESS, USDC_ADDRESS } from "./contracts";
+import { JOUST_ARENA_ADDRESS } from "./contracts";
 import { joustArenaAbi } from "./abi";
 
 const PERMIT2 = "0x000000000022D473030F116dDEE9F6B43aC78BA3";
@@ -18,10 +18,6 @@ const PERMIT2_APPROVE_ABI = [
     stateMutability: "nonpayable",
   },
 ] as const;
-
-export function isMiniKitAvailable(): boolean {
-  return MiniKit.isInstalled();
-}
 
 export async function sendTransaction(
   functionName: string,
@@ -133,49 +129,6 @@ export async function createPoolOnChain(params: {
       params.endTime,
     ],
   ]);
-}
-
-export async function createJoustOnChain(
-  params: {
-    poolId: bigint;
-    amount: bigint;
-    player: string;
-    joustType: number;
-  },
-  isETH: boolean,
-  tokenAddress?: string,
-) {
-  if (isETH) {
-    return sendTransaction(
-      "createJoust",
-      [[params.poolId, params.amount, params.player, params.joustType]],
-      params.amount,
-    );
-  } else {
-    if (!tokenAddress) throw new Error("tokenAddress required for ERC20 jousts");
-    return sendERC20Transaction(
-      "createJoust",
-      [[params.poolId, params.amount, params.player, params.joustType]],
-      tokenAddress,
-      params.amount,
-    );
-  }
-}
-
-export async function settlePoolOnChain(poolId: bigint, winningJoustType: number) {
-  return sendTransaction("settlePoolAndPayout", [poolId, winningJoustType]);
-}
-
-export async function refundPoolOnChain(poolId: bigint) {
-  return sendTransaction("refundPool", [poolId]);
-}
-
-export async function acceptArbiterOnChain(poolId: bigint) {
-  return sendTransaction("acceptArbiterDelegation", [poolId]);
-}
-
-export async function closePoolOnChain(poolId: bigint) {
-  return sendTransaction("closePool", [poolId]);
 }
 
 export function closeMiniApp() {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireSession, getSession } from "@/lib/session";
+import { requireSession } from "@/lib/session";
 import { requireWorldId, JOUST_LIMITS } from "@/lib/world-id";
 import { notifyUser } from "@/lib/notifications";
 

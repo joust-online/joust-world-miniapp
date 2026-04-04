@@ -1,8 +1,6 @@
 import { type Address } from "viem";
 import { worldchain } from "viem/chains";
 
-export { joustArenaAbi } from "./abi";
-
 export const CHAIN = worldchain;
 export const CHAIN_ID = worldchain.id; // 480
 
