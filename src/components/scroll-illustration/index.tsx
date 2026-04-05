@@ -19,10 +19,17 @@ const FRAME_TIMINGS = [75, 75, 150];
 
 type Phase = "intro" | "idle" | "exit" | "done";
 
+/** Pause between open/close cycles when looping (ms) */
+const LOOP_PAUSE = 800;
+
 interface ScrollAnimationProps {
   className?: string;
   triggerExit?: boolean;
   onExitComplete?: () => void;
+  /** Override the inner transform. Defaults to the verification-wall scale+rotation. */
+  innerStyle?: React.CSSProperties;
+  /** Continuously cycle open → close → open. Defaults to false. */
+  loop?: boolean;
 }
 
 // Intro frames: scroll4 → scroll2 → scroll1
@@ -30,10 +37,18 @@ const INTRO_FRAMES = [Scroll4, Scroll2, Scroll1];
 // Exit frames: scroll1 → scroll3 → scroll4
 const EXIT_FRAMES = [Scroll1, Scroll3, Scroll4];
 
+const DEFAULT_INNER_STYLE: React.CSSProperties = {
+  transform: "scaleX(1.5675) scaleY(1.406) rotate(-7.5deg)",
+  transformOrigin: "center center",
+  marginBottom: "20%",
+};
+
 export function ScrollAnimation({
   className = "",
   triggerExit = false,
   onExitComplete,
+  innerStyle,
+  loop = false,
 }: ScrollAnimationProps) {
   const [phase, setPhase] = useState<Phase>("intro");
   const [frameIndex, setFrameIndex] = useState(0);
@@ -76,7 +91,7 @@ export function ScrollAnimation({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Start exit when triggerExit flips
+  // Start exit when triggerExit flips (manual trigger)
   useEffect(() => {
     if (triggerExit && phase === "idle") {
       setPhase("exit");
@@ -85,6 +100,31 @@ export function ScrollAnimation({
     }
     return () => clearTimeout(timerRef.current);
   }, [triggerExit, phase, runSequence]);
+
+  // Loop: auto-cycle open → pause → close → pause → open
+  useEffect(() => {
+    if (!loop) return;
+
+    if (phase === "idle") {
+      // Scroll is open — pause then close
+      const t = setTimeout(() => {
+        setPhase("exit");
+        setFrameIndex(0);
+        runSequence("exit");
+      }, LOOP_PAUSE);
+      return () => clearTimeout(t);
+    }
+
+    if (phase === "done") {
+      // Scroll is closed — pause then reopen
+      const t = setTimeout(() => {
+        setPhase("intro");
+        setFrameIndex(0);
+        runSequence("intro");
+      }, LOOP_PAUSE);
+      return () => clearTimeout(t);
+    }
+  }, [loop, phase, runSequence]);
 
   const frames = phase === "exit" ? EXIT_FRAMES : INTRO_FRAMES;
   const Frame =
@@ -100,7 +140,7 @@ export function ScrollAnimation({
       role="img"
       aria-label="Scroll illustration animation"
     >
-      <div style={{ transform: "scaleX(1.5675) scaleY(1.406) rotate(-7.5deg)", transformOrigin: "center center", marginBottom: "20%" }}>
+      <div style={innerStyle ?? DEFAULT_INNER_STYLE}>
         <Frame className="w-full h-auto" />
       </div>
     </div>

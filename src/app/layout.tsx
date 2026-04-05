@@ -6,6 +6,7 @@ import { Providers } from "@/components/providers";
 import { DevInfo } from "@/components/dev-info";
 import { VerificationWall } from "@/components/verification-wall";
 import { Eruda } from "@/components/eruda";
+import SplashBackground from "@/components/splash-background";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 
@@ -56,11 +57,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={cn("font-sans", geist.variable)}>
       <body className={cn(jacquard.variable, jeju.variable, firaMono.variable, "dark")}>
         <Eruda />
+        <SplashBackground />
         <Providers>
-          <VerificationWall>
+{/* <VerificationWall> */}
             {children}
             <DevInfo />
-          </VerificationWall>
+{/* </VerificationWall> */}
         </Providers>
       </body>
     </html>
