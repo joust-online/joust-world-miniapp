@@ -98,6 +98,7 @@ export async function POST(req: NextRequest) {
         title: data.title,
         description: data.description,
         creatorId: session.userId,
+        arbiterId: isSelfArbiter ? session.userId : undefined,
         arbiterAddress: data.arbiterAddress.toLowerCase(),
         arbiterAccepted: isSelfArbiter,
         arbiterFee: data.arbiterFee,
