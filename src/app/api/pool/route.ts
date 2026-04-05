@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { requireSession, getSession } from "@/lib/session";
+import { requireWorldId } from "@/lib/world-id";
 import { PoolState } from "@/generated/prisma";
 
 const createPoolSchema = z.object({
@@ -75,6 +76,12 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await requireSession();
+
+    // #6: Pool creation requires Orb-level verification
+    const worldIdCheck = requireWorldId(session.worldIdVerified, session.worldIdLevel, "orb");
+    if (!worldIdCheck.allowed) {
+      return NextResponse.json({ error: worldIdCheck.reason }, { status: 403 });
+    }
 
     const body = await req.json();
     const parsed = createPoolSchema.safeParse(body);

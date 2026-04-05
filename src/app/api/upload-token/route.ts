@@ -5,9 +5,17 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { r2Client } from "@/lib/r2";
 import { requireSession } from "@/lib/session";
 
+const ALLOWED_CONTENT_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
 const uploadTokenSchema = z.object({
-  filename: z.string().min(1),
-  contentType: z.string().min(1),
+  filename: z
+    .string()
+    .min(1)
+    .max(200)
+    .regex(/^[a-zA-Z0-9_\-\.]+$/, "Filename contains invalid characters"),
+  contentType: z.string().refine((ct) => ALLOWED_CONTENT_TYPES.includes(ct), {
+    message: "Only JPEG, PNG, and WebP images are allowed",
+  }),
 });
 
 // All uploads go to joust-worldcoin bucket
@@ -25,9 +33,12 @@ export async function POST(req: NextRequest) {
 
     const { filename, contentType } = parsed.data;
 
+    // Sanitize: strip any path components (defense in depth)
+    const safeFilename = filename.split("/").pop()!;
+
     const command = new PutObjectCommand({
       Bucket: BUCKET,
-      Key: filename,
+      Key: safeFilename,
       ContentType: contentType,
     });
 

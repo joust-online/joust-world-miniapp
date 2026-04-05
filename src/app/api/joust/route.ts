@@ -83,6 +83,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // #1: Tx replay check — ensure this txHash hasn't been used
+    const existingJoust = await prisma.joust.findFirst({ where: { txHash: data.txHash } });
+    if (existingJoust) {
+      return NextResponse.json({ error: "Transaction already recorded" }, { status: 409 });
+    }
+
     // W7: Use on-chain amount as source of truth
     const verifiedAmount = BigInt(joustEvent.args.amount as bigint);
 

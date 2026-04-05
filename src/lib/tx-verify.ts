@@ -4,7 +4,7 @@ import { joustArenaAbi } from "./abi";
 import { JOUST_ARENA_ADDRESS } from "./contracts";
 
 /**
- * Fetch a tx receipt and verify it succeeded and targets our contract.
+ * Fetch a tx receipt and verify it succeeded.
  * Returns the receipt or throws.
  */
 export async function getVerifiedReceipt(txHash: `0x${string}`) {

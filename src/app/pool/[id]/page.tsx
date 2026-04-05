@@ -236,27 +236,28 @@ export default function PoolDetailPage() {
 
     if (hash) {
       // Record the joust in the DB
-      try {
-        await fetch("/api/joust", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            poolId: pool.id,
-            joustType: selectedOption,
-            amount: amountWei.toString(),
-            txHash: hash,
-          }),
-        });
-        sendHaptic("success");
-        setAmount("");
-        setSelectedOption(null);
-        setShowJoust(false);
-        // Refresh pool data
-        queryClient.invalidateQueries({ queryKey: ["pool", id] });
-        queryClient.invalidateQueries({ queryKey: ["pools"] });
-      } catch (err) {
-        console.error("Failed to record joust:", err);
+      const res = await fetch("/api/joust", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          poolId: pool.id,
+          joustType: selectedOption,
+          amount: amountWei.toString(),
+          txHash: hash,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ error: "Failed to record joust" }));
+        throw new Error(errData.error ?? "Failed to record joust");
       }
+
+      sendHaptic("success");
+      setAmount("");
+      setSelectedOption(null);
+      setShowJoust(false);
+      queryClient.invalidateQueries({ queryKey: ["pool", id] });
+      queryClient.invalidateQueries({ queryKey: ["pools"] });
     }
   };
 
