@@ -12,7 +12,7 @@ const uploadTokenSchema = z.object({
     .string()
     .min(1)
     .max(200)
-    .regex(/^[a-zA-Z0-9_\-\.]+$/, "Filename contains invalid characters"),
+    .regex(/^[a-zA-Z0-9_\-.]+$/, "Filename contains invalid characters"),
   contentType: z.string().refine((ct) => ALLOWED_CONTENT_TYPES.includes(ct), {
     message: "Only JPEG, PNG, and WebP images are allowed",
   }),
