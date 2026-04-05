@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { jsonResponse } from "@/lib/json";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { requireSession, getSession } from "@/lib/session";
@@ -67,7 +68,7 @@ export async function GET(req: NextRequest) {
     return true;
   });
 
-  return NextResponse.json({
+  return jsonResponse({
     pools: filtered,
     nextCursor: pools.length === limit ? pools[pools.length - 1]?.id : null,
   });
@@ -116,7 +117,7 @@ export async function POST(req: NextRequest) {
       include: { options: true },
     });
 
-    return NextResponse.json({ pool }, { status: 201 });
+    return jsonResponse({ pool }, { status: 201 });
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

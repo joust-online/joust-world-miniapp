@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { jsonResponse } from "@/lib/json";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest) {
     take: 50,
   });
 
-  return NextResponse.json({ jousts });
+  return jsonResponse({ jousts });
 }
 
 export async function POST(req: NextRequest) {
@@ -138,7 +139,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ joust }, { status: 201 });
+    return jsonResponse({ joust }, { status: 201 });
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

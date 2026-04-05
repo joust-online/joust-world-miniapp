@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { jsonResponse } from "@/lib/json";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { getSession, requireSession } from "@/lib/session";
@@ -37,7 +38,7 @@ export async function GET() {
     where: { userId: session.userId, isWinner: true },
   });
 
-  return NextResponse.json({
+  return jsonResponse({
     user: {
       ...user,
       winCount: wins,
@@ -65,7 +66,7 @@ export async function PATCH(req: NextRequest) {
       await session.save();
     }
 
-    return NextResponse.json({ user: updated });
+    return jsonResponse({ user: updated });
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
