@@ -1,4 +1,4 @@
-import { IDKit, orbLegacy } from "@worldcoin/idkit-core";
+import { IDKit, deviceLegacy } from "@worldcoin/idkit-core";
 
 const APP_ID = process.env.NEXT_PUBLIC_APP_ID!;
 const RP_ID = process.env.NEXT_PUBLIC_RP_ID!;
@@ -30,7 +30,7 @@ export async function runWorldIdVerification(action: string): Promise<boolean> {
     },
     allow_legacy_proofs: true,
     environment: "production",
-  }).preset(orbLegacy());
+  }).preset(deviceLegacy());
 
   const completion = await request.pollUntilCompletion({ timeout: 120000 });
   if (!completion.success) {
