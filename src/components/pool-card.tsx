@@ -5,6 +5,7 @@ import { formatAmount } from "@/lib/utils";
 import { getCollateralInfo } from "@/lib/contracts";
 import { VerificationBadge } from "@/components/verification-badge";
 import { formatDistanceToNow } from "date-fns";
+import { PoolState } from "@/generated/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -25,13 +26,14 @@ interface PoolCardProps {
 function getDisplayState(state: string, endTime: string, joustCount: number) {
   const expired = new Date(endTime) < new Date();
 
-  if (state === "SETTLED") return { text: "Settled", color: "text-blue-400" };
-  if (state === "REFUNDED") return { text: "Refunded", color: "text-muted-foreground" };
-  if (state === "CLOSED" && !expired) return { text: "Closed", color: "text-orange-400" };
+  if (state === PoolState.SETTLED) return { text: "Settled", color: "text-blue-400" };
+  if (state === PoolState.REFUNDED) return { text: "Refunded", color: "text-muted-foreground" };
+  if (state === PoolState.CLOSED && !expired) return { text: "Closed", color: "text-orange-400" };
   if (expired && joustCount > 0) return { text: "Awaiting Settlement", color: "text-yellow-400" };
   if (expired) return { text: "Expired", color: "text-red-400" };
-  if (state === "PENDING_ARBITER") return { text: "Pending Arbiter", color: "text-yellow-400" };
-  if (state === "ACTIVE") return { text: "Active", color: "text-green-400" };
+  if (state === PoolState.PENDING_ARBITER)
+    return { text: "Pending Arbiter", color: "text-yellow-400" };
+  if (state === PoolState.ACTIVE) return { text: "Active", color: "text-green-400" };
   return { text: state, color: "text-muted-foreground" };
 }
 

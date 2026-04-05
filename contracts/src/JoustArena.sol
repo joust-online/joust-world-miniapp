@@ -296,6 +296,14 @@ contract JoustArena is
         }
     }
 
+    /// @notice Allows a player to claim their payout from a settled pool
+    /// @dev This function is used when settlePool() was called instead of settlePoolAndPayout().
+    ///   settlePool() only pays house+arbiter fees; players must call claimPayout individually.
+    ///   The frontend currently always uses settlePoolAndPayout() for convenience.
+    ///   TODO: Build a "Claim Payout" UI for cases where settlePool() was used directly
+    ///   (e.g., pools with many jousters where gas cost of settlePoolAndPayout is too high).
+    /// @dev MISSING EVENT: This function does not emit an event. A Claimed(address indexed player,
+    ///   uint256 indexed poolId, uint256 amount) event should be added for off-chain indexing.
     function claimPayout(uint256 poolId, address to) external notPaused nonReentrant {
         Pool storage pool = pools[poolId];
         uint8 winningJoustType = pool.winningJoustType;
@@ -410,6 +418,11 @@ contract JoustArena is
     }
 
     /// @notice USE WITH EXTREME CAUTION, must calculate correctly how many funds need saving or it could affect other pools
+    /// @dev HACKATHON NOTE: In production, this function should be:
+    ///   1. Protected by a timelock (e.g., 48-hour delay) so users can exit before rescue executes
+    ///   2. Gated behind a multisig (e.g., Gnosis Safe) instead of single owner
+    ///   3. Emit a RescueInitiated event when queued, giving users time to react
+    ///   4. Limited to emergency scenarios with on-chain governance approval
     /// @param poolId the poolId to rescue
     /// @param amount the amount of funds to rescue
     function rescuePool(uint256 poolId, uint256 amount) external onlyOwner {

@@ -9,6 +9,7 @@ import { AuthButton } from "@/components/auth-button";
 import { VerificationBadge } from "@/components/verification-badge";
 import { runWorldIdVerification } from "@/lib/world-id-verify";
 import { shortenAddress } from "@/lib/utils";
+import { getPfpUrl } from "@/lib/image-urls";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -118,13 +119,38 @@ export default function ProfilePage() {
                   if (!file) return;
                   setUploading(true);
                   try {
+                    // Resize image on client
                     const dataUrl = await resizeImage(file, 256);
-                    const res = await fetch("/api/profile", {
+                    const response = await fetch(dataUrl);
+                    const blob = await response.blob();
+
+                    // Get presigned upload URL
+                    const filename = `user_${user.id}_pfp_${Date.now()}.jpg`;
+                    const tokenRes = await fetch("/api/upload-token", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        filename,
+                        contentType: "image/jpeg",
+                      }),
+                    });
+                    if (!tokenRes.ok) throw new Error("Failed to get upload token");
+                    const { uploadUrl } = await tokenRes.json();
+
+                    // Upload directly to R2
+                    await fetch(uploadUrl, {
+                      method: "PUT",
+                      headers: { "Content-Type": "image/jpeg" },
+                      body: blob,
+                    });
+
+                    // Update profile with filepath
+                    const profileRes = await fetch("/api/profile", {
                       method: "PATCH",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ pfp: dataUrl }),
+                      body: JSON.stringify({ pfp: filename }),
                     });
-                    if (res.ok) {
+                    if (profileRes.ok) {
                       queryClient.invalidateQueries({ queryKey: ["profile"] });
                     }
                   } catch (err) {
@@ -140,7 +166,9 @@ export default function ProfilePage() {
                 className="group relative mx-auto mb-2 block"
               >
                 <Avatar className="h-16 w-16">
-                  {user.pfp ? <AvatarImage src={user.pfp} alt={user.username} /> : null}
+                  {user.pfp ? (
+                    <AvatarImage src={getPfpUrl(user.pfp) ?? undefined} alt={user.username} />
+                  ) : null}
                   <AvatarFallback className="text-2xl">👤</AvatarFallback>
                 </Avatar>
                 <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
@@ -280,7 +308,7 @@ export default function ProfilePage() {
                   <span className="text-green-400">+{user.honorScore.totalUpvotes}</span>
                   <span className="text-destructive">-{user.honorScore.totalDownvotes}</span>
                   <span className="text-muted-foreground text-sm">
-                    Score: {user.honorScore.score.toFixed(1)}
+                    Score: {user.honorScore.score}
                   </span>
                 </div>
               </CardContent>
@@ -304,6 +332,18 @@ export default function ProfilePage() {
               </div>
             </div>
           )}
+
+          <Button
+            variant="outline"
+            className="w-full text-destructive"
+            onClick={async () => {
+              await fetch("/api/auth/session", { method: "DELETE" });
+              queryClient.invalidateQueries({ queryKey: ["session"] });
+              queryClient.invalidateQueries({ queryKey: ["profile"] });
+            }}
+          >
+            Sign Out
+          </Button>
         </div>
       )}
 

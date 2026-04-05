@@ -3,6 +3,7 @@ import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
 import { requireWorldId } from "@/lib/world-id";
+import { PoolState } from "@/generated/prisma";
 
 const honorVoteSchema = z.object({
   arbiterId: z.number().int(),
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
 
     // Check pool is settled
     const pool = await prisma.pool.findUnique({ where: { id: poolId } });
-    if (!pool || pool.state !== "SETTLED") {
+    if (!pool || pool.state !== PoolState.SETTLED) {
       return NextResponse.json({ error: "Pool must be settled to vote" }, { status: 400 });
     }
 

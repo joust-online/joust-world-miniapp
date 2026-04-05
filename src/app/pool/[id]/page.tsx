@@ -22,31 +22,37 @@ import { HonorVote } from "@/components/honor-vote";
 import { formatDistanceToNow } from "date-fns";
 import { parseUnits } from "viem";
 import { useQueryClient } from "@tanstack/react-query";
+import { PoolState } from "@/generated/prisma";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
 /* ── Pool lifecycle stages ── */
-const LIFECYCLE_STAGES = ["PENDING", "ACTIVE", "CLOSED", "SETTLED"] as const;
+const LIFECYCLE_STAGES = [
+  PoolState.PENDING_ARBITER,
+  PoolState.ACTIVE,
+  PoolState.CLOSED,
+  PoolState.SETTLED,
+] as const;
 
 function getPoolStatusDisplay(
   state: string,
   expired: boolean,
   joustCount: number,
 ): { text: string; color: string } {
-  if (state === "SETTLED") return { text: "SETTLED", color: "text-blue-400" };
-  if (state === "REFUNDED") return { text: "REFUNDED", color: "text-red-400" };
+  if (state === PoolState.SETTLED) return { text: "SETTLED", color: "text-blue-400" };
+  if (state === PoolState.REFUNDED) return { text: "REFUNDED", color: "text-red-400" };
   if (expired && joustCount > 0) return { text: "AWAITING SETTLEMENT", color: "text-yellow-400" };
   if (expired) return { text: "EXPIRED", color: "text-red-400" };
-  if (state === "ACTIVE") return { text: "ACTIVE", color: "text-green-400" };
-  if (state === "CLOSED") return { text: "CLOSED", color: "text-orange-400" };
+  if (state === PoolState.ACTIVE) return { text: "ACTIVE", color: "text-green-400" };
+  if (state === PoolState.CLOSED) return { text: "CLOSED", color: "text-orange-400" };
   return { text: state, color: "" };
 }
 
 function PoolLifecycleBar({ state }: { state: string }) {
   const currentIdx = LIFECYCLE_STAGES.indexOf(state as (typeof LIFECYCLE_STAGES)[number]);
-  const isRefunded = state === "REFUNDED";
+  const isRefunded = state === PoolState.REFUNDED;
 
   if (isRefunded) {
     return (
@@ -56,7 +62,9 @@ function PoolLifecycleBar({ state }: { state: string }) {
             <div key={stage} className="flex-1">
               <div
                 className={`h-1.5 w-full rounded-full ${
-                  stage === "PENDING" || stage === "ACTIVE" ? "bg-red-400/60" : "bg-muted"
+                  stage === PoolState.PENDING_ARBITER || stage === PoolState.ACTIVE
+                    ? "bg-red-400/60"
+                    : "bg-muted"
                 }`}
               />
             </div>
@@ -195,7 +203,7 @@ export default function PoolDetailPage() {
   const collateral = getCollateralInfo(pool.collateral);
   const total = BigInt(pool.totalAmountJousted?.toString() ?? "0");
   const expired = new Date(pool.endTime) < new Date();
-  const isActive = pool.state === "ACTIVE" && !expired;
+  const isActive = pool.state === PoolState.ACTIVE && !expired;
   const isETH = pool.collateral.toLowerCase() === ETH_ADDRESS.toLowerCase();
   const contractId = pool.contractId != null ? BigInt(pool.contractId.toString()) : null;
 
@@ -228,27 +236,28 @@ export default function PoolDetailPage() {
 
     if (hash) {
       // Record the joust in the DB
-      try {
-        await fetch("/api/joust", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            poolId: pool.id,
-            joustType: selectedOption,
-            amount: amountWei.toString(),
-            txHash: hash,
-          }),
-        });
-        sendHaptic("success");
-        setAmount("");
-        setSelectedOption(null);
-        setShowJoust(false);
-        // Refresh pool data
-        queryClient.invalidateQueries({ queryKey: ["pool", id] });
-        queryClient.invalidateQueries({ queryKey: ["pools"] });
-      } catch (err) {
-        console.error("Failed to record joust:", err);
+      const res = await fetch("/api/joust", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          poolId: pool.id,
+          joustType: selectedOption,
+          amount: amountWei.toString(),
+          txHash: hash,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ error: "Failed to record joust" }));
+        throw new Error(errData.error ?? "Failed to record joust");
       }
+
+      sendHaptic("success");
+      setAmount("");
+      setSelectedOption(null);
+      setShowJoust(false);
+      queryClient.invalidateQueries({ queryKey: ["pool", id] });
+      queryClient.invalidateQueries({ queryKey: ["pools"] });
     }
   };
 
@@ -308,11 +317,18 @@ export default function PoolDetailPage() {
   };
 
   /* ── Determine which arbiter actions are available ── */
-  const canAcceptArbiter = isArbiter && !pool.arbiterAccepted && pool.state === "PENDING";
-  const canClosePool = isArbiter && pool.arbiterAccepted && pool.state === "ACTIVE";
-  const canSettlePool = isArbiter && pool.arbiterAccepted && pool.state === "CLOSED";
+  const canAcceptArbiter =
+    isArbiter && !pool.arbiterAccepted && pool.state === PoolState.PENDING_ARBITER;
+  const canClosePool = isArbiter && pool.arbiterAccepted && pool.state === PoolState.ACTIVE;
+  // W8: Allow settle from CLOSED or ACTIVE+expired
+  const canSettlePool =
+    isArbiter &&
+    pool.arbiterAccepted &&
+    (pool.state === PoolState.CLOSED || (pool.state === PoolState.ACTIVE && expired));
   const canRefundPool =
-    isArbiter && pool.arbiterAccepted && (pool.state === "ACTIVE" || pool.state === "CLOSED");
+    isArbiter &&
+    pool.arbiterAccepted &&
+    (pool.state === PoolState.ACTIVE || pool.state === PoolState.CLOSED);
   const showArbiterPanel =
     isArbiter && (canAcceptArbiter || canClosePool || canSettlePool || canRefundPool);
   const arbiterBusy = arbiterTx.status === "pending" || arbiterTx.status === "confirming";
@@ -363,7 +379,8 @@ export default function PoolDetailPage() {
       {/* Options / Results */}
       <div className="mb-4 space-y-2">
         {pool.options?.map((opt: any) => {
-          const isWinner = pool.state === "SETTLED" && opt.joustType === pool.winningJoustType;
+          const isWinner =
+            pool.state === PoolState.SETTLED && opt.joustType === pool.winningJoustType;
           const isSelected = selectedOption === opt.joustType;
           return (
             <button
@@ -622,7 +639,7 @@ export default function PoolDetailPage() {
       )}
 
       {/* Honor Vote */}
-      {pool.state === "SETTLED" && pool.arbiter && (
+      {pool.state === PoolState.SETTLED && pool.arbiter && (
         <div className="mb-4">
           <HonorVote
             arbiterId={pool.arbiter.id}

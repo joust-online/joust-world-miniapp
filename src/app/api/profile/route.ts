@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { jsonResponse } from "@/lib/json";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { getSession, requireSession } from "@/lib/session";
 
 const updateProfileSchema = z.object({
   username: z.string().min(1).max(50).optional(),
-  pfp: z.string().max(200000).optional(), // data URL or regular URL
+  pfp: z.string().max(500).optional(), // filepath in R2 bucket
 });
 
 export async function GET() {
@@ -37,7 +38,7 @@ export async function GET() {
     where: { userId: session.userId, isWinner: true },
   });
 
-  return NextResponse.json({
+  return jsonResponse({
     user: {
       ...user,
       winCount: wins,
@@ -65,7 +66,7 @@ export async function PATCH(req: NextRequest) {
       await session.save();
     }
 
-    return NextResponse.json({ user: updated });
+    return jsonResponse({ user: updated });
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

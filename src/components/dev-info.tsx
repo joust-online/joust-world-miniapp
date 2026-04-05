@@ -9,7 +9,7 @@ export function DevInfo() {
   const [open, setOpen] = useState(false);
   const { data: session } = useSession();
 
-  if (process.env.NODE_ENV !== "development") return null;
+  if (process.env.NEXT_PUBLIC_ENABLE_ERUDA !== "true") return null;
 
   return (
     <div className="fixed right-2 bottom-16 z-50">

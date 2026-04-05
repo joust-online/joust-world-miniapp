@@ -8,13 +8,16 @@ import { PoolCard } from "@/components/pool-card";
 import { VerificationBadge } from "@/components/verification-badge";
 import { NotificationBell } from "@/components/notification-bell";
 import Link from "next/link";
+import { PoolState } from "@/generated/prisma";
+import { formatTokenAmount } from "@/lib/token-utils";
+import { getCollateralInfo } from "@/lib/contracts";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function HomePage() {
   const { data: session } = useSession();
-  const { data: activePools, isLoading: poolsLoading } = usePools("ACTIVE");
+  const { data: activePools, isLoading: poolsLoading } = usePools(PoolState.ACTIVE);
   const { data: myJousts } = useMyJousts(session?.user?.userId);
 
   return (
@@ -85,7 +88,7 @@ export default function HomePage() {
             {myJousts.jousts.slice(0, 5).map((joust: any) => {
               const pool = joust.pool;
               const option = pool?.options?.find((o: any) => o.joustType === joust.joustType);
-              const isSettled = pool?.state === "SETTLED";
+              const isSettled = pool?.state === PoolState.SETTLED;
               const isWin = isSettled && pool?.winningJoustType === joust.joustType;
 
               function getJoustStatus(): {
@@ -114,7 +117,20 @@ export default function HomePage() {
                         <Badge variant="secondary" className="rounded-full text-xs">
                           {option?.label ?? `Option ${joust.joustType}`}
                         </Badge>
-                        <span>{joust.amount} staked</span>
+                        <span>
+                          {formatTokenAmount(
+                            BigInt(joust.amount?.toString() ?? "0"),
+                            getCollateralInfo(
+                              pool?.collateral ?? "0x0000000000000000000000000000000000000000",
+                            ).decimals,
+                          )}{" "}
+                          {
+                            getCollateralInfo(
+                              pool?.collateral ?? "0x0000000000000000000000000000000000000000",
+                            ).symbol
+                          }{" "}
+                          staked
+                        </span>
                       </div>
                     </CardContent>
                   </Card>

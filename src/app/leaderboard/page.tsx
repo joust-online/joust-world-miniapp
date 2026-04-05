@@ -54,9 +54,7 @@ export default function LeaderboardPage() {
                         <span className="text-red-400">-{item.totalDownvotes}</span>
                       </div>
                     </div>
-                    <span className="text-accent text-sm font-semibold">
-                      {item.score.toFixed(1)}
-                    </span>
+                    <span className="text-accent text-sm font-semibold">{item.score}</span>
                   </CardContent>
                 </Card>
               ))}

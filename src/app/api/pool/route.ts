@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { jsonResponse } from "@/lib/json";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { requireSession, getSession } from "@/lib/session";
 import { requireWorldId } from "@/lib/world-id";
+import { PoolState } from "@/generated/prisma";
 
 const createPoolSchema = z.object({
   title: z.string().min(1).max(200),
@@ -61,12 +63,12 @@ export async function GET(req: NextRequest) {
   const now = new Date();
   const filtered = pools.filter((pool) => {
     const expired = pool.endTime < now;
-    const terminal = pool.state === "SETTLED" || pool.state === "REFUNDED";
+    const terminal = pool.state === PoolState.SETTLED || pool.state === PoolState.REFUNDED;
     if (expired && pool._count.jousts === 0 && !terminal) return false;
     return true;
   });
 
-  return NextResponse.json({
+  return jsonResponse({
     pools: filtered,
     nextCursor: pools.length === limit ? pools[pools.length - 1]?.id : null,
   });
@@ -75,6 +77,12 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await requireSession();
+
+    // #6: Pool creation requires Orb-level verification
+    const worldIdCheck = requireWorldId(session.worldIdVerified, session.worldIdLevel, "orb");
+    if (!worldIdCheck.allowed) {
+      return NextResponse.json({ error: worldIdCheck.reason }, { status: 403 });
+    }
 
     const body = await req.json();
     const parsed = createPoolSchema.safeParse(body);
@@ -90,13 +98,14 @@ export async function POST(req: NextRequest) {
         title: data.title,
         description: data.description,
         creatorId: session.userId,
+        arbiterId: isSelfArbiter ? session.userId : undefined,
         arbiterAddress: data.arbiterAddress.toLowerCase(),
         arbiterAccepted: isSelfArbiter,
         arbiterFee: data.arbiterFee,
         collateral: data.collateral.toLowerCase(),
         minJoustAmount: BigInt(data.minJoustAmount),
         supportedJoustTypes: data.options.length,
-        state: isSelfArbiter ? "ACTIVE" : "PENDING_ARBITER",
+        state: isSelfArbiter ? PoolState.ACTIVE : PoolState.PENDING_ARBITER,
         endTime: new Date(data.endTime),
         options: {
           create: data.options.map((opt) => ({
@@ -109,7 +118,7 @@ export async function POST(req: NextRequest) {
       include: { options: true },
     });
 
-    return NextResponse.json({ pool }, { status: 201 });
+    return jsonResponse({ pool }, { status: 201 });
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
