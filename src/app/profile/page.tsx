@@ -332,6 +332,18 @@ export default function ProfilePage() {
               </div>
             </div>
           )}
+
+          <Button
+            variant="outline"
+            className="w-full text-destructive"
+            onClick={async () => {
+              await fetch("/api/auth/session", { method: "DELETE" });
+              queryClient.invalidateQueries({ queryKey: ["session"] });
+              queryClient.invalidateQueries({ queryKey: ["profile"] });
+            }}
+          >
+            Sign Out
+          </Button>
         </div>
       )}
 
