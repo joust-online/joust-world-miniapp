@@ -117,13 +117,10 @@ export function ScrollWideAnimation({
     activeIdx = INTRO_INDICES[frameIndex];
   }
 
-  // Internal style is merged so user-provided values win on conflict.
-  const mergedStyle: React.CSSProperties = { ...style };
-
   return (
     <div
       className={className}
-      style={mergedStyle}
+      style={style}
       role="presentation"
       aria-hidden="true"
     >

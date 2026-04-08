@@ -68,8 +68,8 @@ export default function HomePage() {
           </div>
         ) : activePools?.pools?.length ? (
           <div className="space-y-3">
-            {activePools.pools.slice(0, 5).map((pool: any) => (
-              <PoolCard key={pool.id} pool={pool} />
+            {activePools.pools.slice(0, 5).map((pool: any, i: number) => (
+              <PoolCard key={pool.id} pool={pool} index={i} />
             ))}
           </div>
         ) : (

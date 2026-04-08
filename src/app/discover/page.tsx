@@ -35,8 +35,8 @@ export default function DiscoverPage() {
         <div className="text-muted-foreground py-8 text-center">Loading...</div>
       ) : data?.pools?.length ? (
         <div className="space-y-3">
-          {data.pools.map((pool: any) => (
-            <PoolCard key={pool.id} pool={pool} />
+          {data.pools.map((pool: any, i: number) => (
+            <PoolCard key={pool.id} pool={pool} index={i} />
           ))}
         </div>
       ) : (
