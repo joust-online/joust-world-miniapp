@@ -23,7 +23,12 @@ interface PoolCardProps {
     creator: { username: string; worldIdLevel?: string };
     _count: { jousts: number };
   };
+  /** Position in a list — used to stagger the scroll animation intro. */
+  index?: number;
 }
+
+/** ms between scroll intros for cards in the same list */
+const CASCADE_STEP_MS = 60;
 
 function getDisplayState(state: string, endTime: string, joustCount: number) {
   const expired = new Date(endTime) < new Date();
@@ -39,7 +44,7 @@ function getDisplayState(state: string, endTime: string, joustCount: number) {
   return { text: state, color: "text-muted-foreground" };
 }
 
-export function PoolCard({ pool }: PoolCardProps) {
+export function PoolCard({ pool, index = 0 }: PoolCardProps) {
   const collateral = getCollateralInfo(pool.collateral);
   const total =
     typeof pool.totalAmountJousted === "string"
@@ -59,6 +64,7 @@ export function PoolCard({ pool }: PoolCardProps) {
             className="h-[135%] w-[135%] opacity-30"
             preserveAspectRatio="none"
             style={{ transform: "rotate(-2.5deg)", transformOrigin: "center center" }}
+            delay={index * CASCADE_STEP_MS}
           />
         </div>
         <CardContent className="relative z-10 p-4">

@@ -328,8 +328,8 @@ export default function ProfilePage() {
             <div>
               <h3 className="mb-2 text-sm font-semibold">Your Pools</h3>
               <div className="space-y-3">
-                {myPoolsData.pools.map((pool: any) => (
-                  <PoolCard key={pool.id} pool={pool} />
+                {myPoolsData.pools.map((pool: any, i: number) => (
+                  <PoolCard key={pool.id} pool={pool} index={i} />
                 ))}
               </div>
             </div>

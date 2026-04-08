@@ -32,10 +32,15 @@ interface ScrollAnimationProps {
   loop?: boolean;
 }
 
-// Intro frames: scroll4 → scroll2 → scroll1
-const INTRO_FRAMES = [Scroll4, Scroll2, Scroll1];
-// Exit frames: scroll1 → scroll3 → scroll4
-const EXIT_FRAMES = [Scroll1, Scroll3, Scroll4];
+// All four frames are mounted once and stacked absolutely; we toggle which
+// one is visible via opacity. This keeps each frame's expensive grain
+// generation memoized for the lifetime of the component instead of being
+// recomputed on every frame swap. Mirrors the ScrollWideAnimation lifecycle.
+const FRAMES = [Scroll1, Scroll2, Scroll3, Scroll4] as const;
+
+// Stable indices into the FRAMES array
+const INTRO_INDICES = [3, 1, 0]; // scroll4 → scroll2 → scroll1
+const EXIT_INDICES = [0, 2, 3]; // scroll1 → scroll3 → scroll4
 
 const DEFAULT_INNER_STYLE: React.CSSProperties = {
   transform: "scaleX(1.5675) scaleY(1.406) rotate(-7.5deg)",
@@ -126,13 +131,17 @@ export function ScrollAnimation({
     }
   }, [loop, phase, runSequence]);
 
-  const frames = phase === "exit" ? EXIT_FRAMES : INTRO_FRAMES;
-  const Frame =
-    phase === "idle"
-      ? Scroll1
-      : phase === "done"
-        ? Scroll4
-        : frames[frameIndex];
+  // Resolve which of the 4 mounted frames should be visible right now.
+  let activeIdx: number;
+  if (phase === "idle") {
+    activeIdx = 0; // Scroll1
+  } else if (phase === "done") {
+    activeIdx = 3; // Scroll4
+  } else if (phase === "exit") {
+    activeIdx = EXIT_INDICES[frameIndex];
+  } else {
+    activeIdx = INTRO_INDICES[frameIndex];
+  }
 
   return (
     <div
@@ -140,8 +149,16 @@ export function ScrollAnimation({
       role="img"
       aria-label="Scroll illustration animation"
     >
-      <div style={innerStyle ?? DEFAULT_INNER_STYLE}>
-        <Frame className="w-full h-auto" />
+      <div style={innerStyle ?? DEFAULT_INNER_STYLE} className="relative">
+        {FRAMES.map((Frame, i) => (
+          <div
+            key={i}
+            className={i === 0 ? "" : "absolute inset-0"}
+            style={{ opacity: i === activeIdx ? 1 : 0 }}
+          >
+            <Frame className="w-full h-auto" />
+          </div>
+        ))}
       </div>
     </div>
   );
