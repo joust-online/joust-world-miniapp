@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import {
   generateGrainData,
   generateVerticalGrainData,
@@ -26,6 +26,15 @@ interface Props {
 }
 
 export function ScrollWide1({ className, preserveAspectRatio }: Props) {
+  // Per-instance unique suffix so SVG IDs don't collide when multiple wide
+  // scrolls render on the same page (e.g. PoolCard list, leaderboard).
+  const uid = useId().replace(/[:]/g, "");
+  const glowId = `imq-glow-edges-sw1-${uid}`;
+  const grainFilterId = `grain-filter-sw1-${uid}`;
+  const vgrainFilterId = `vgrain-filter-sw1-${uid}`;
+  const vclipId = `clip-vgrain-sw1-${uid}`;
+  const cclipId = `clip-grain-sw1-${uid}`;
+
   const grain = useMemo(
     () =>
       generateGrainData({
@@ -62,7 +71,7 @@ export function ScrollWide1({ className, preserveAspectRatio }: Props) {
     >
       <defs>
         <filter
-          id="imq-glow-edges-sw1"
+          id={glowId}
           x="-10%"
           y="-10%"
           width="120%"
@@ -84,41 +93,41 @@ export function ScrollWide1({ className, preserveAspectRatio }: Props) {
           <feBlend mode="screen" in="glow" in2="SourceGraphic" result="glowOnSource" />
           <feComposite operator="in" in="glowOnSource" in2="SourceGraphic" />
         </filter>
-        <filter id={grain.filterId}>
+        <filter id={grainFilterId}>
           <feComponentTransfer>
             <feFuncR type="linear" slope={grain.slope} intercept={grain.intercept} />
             <feFuncG type="linear" slope={grain.slope} intercept={grain.intercept} />
             <feFuncB type="linear" slope={grain.slope} intercept={grain.intercept} />
           </feComponentTransfer>
         </filter>
-        <filter id={vgrain.filterId}>
+        <filter id={vgrainFilterId}>
           <feComponentTransfer>
             <feFuncR type="linear" slope={vgrain.slope} intercept={vgrain.intercept} />
             <feFuncG type="linear" slope={vgrain.slope} intercept={vgrain.intercept} />
             <feFuncB type="linear" slope={vgrain.slope} intercept={vgrain.intercept} />
           </feComponentTransfer>
         </filter>
-        <clipPath id="clip-vgrain-sw1">
+        <clipPath id={vclipId}>
           <path d={VGRAIN_PATH} />
         </clipPath>
-        <clipPath id="clip-grain-sw1">
+        <clipPath id={cclipId}>
           <path d={GRAIN_PATH} />
         </clipPath>
       </defs>
 
       <path d={VGRAIN_PATH} fill="#010101" stroke="#4c53a4" strokeMiterlimit={10} />
-      <g clipPath="url(#clip-vgrain-sw1)" filter={`url(#${vgrain.filterId})`} pointerEvents="none" aria-hidden="true">
+      <g clipPath={`url(#${vclipId})`} filter={`url(#${vgrainFilterId})`} pointerEvents="none" aria-hidden="true">
         <g fill="#010101">
           {vgrain.rects.map((r, i) => (<rect key={i} x={r.x} y={r.y} width={r.width} height={r.height} opacity={r.opacity} />))}
         </g>
       </g>
 
-      <g filter="url(#imq-glow-edges-sw1)">
+      <g filter={`url(#${glowId})`}>
         <path d={GLOW_PATH} fill="none" stroke="#4c53a4" strokeMiterlimit={10} />
       </g>
 
       <path d={GRAIN_PATH} fill="#4c53a4" stroke="#010101" strokeMiterlimit={10} />
-      <g clipPath="url(#clip-grain-sw1)" filter={`url(#${grain.filterId})`} pointerEvents="none" aria-hidden="true">
+      <g clipPath={`url(#${cclipId})`} filter={`url(#${grainFilterId})`} pointerEvents="none" aria-hidden="true">
         <g fill="#010101">
           {grain.rects.map((r, i) => (<rect key={i} x={r.x} y={r.y} width={r.width} height={r.height} opacity={r.opacity} />))}
         </g>

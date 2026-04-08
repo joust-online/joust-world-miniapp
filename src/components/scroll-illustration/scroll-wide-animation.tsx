@@ -9,13 +9,21 @@ import { ScrollWide4 } from "./scroll-wide-4";
 // Mirrors the verification-wall ScrollAnimation lifecycle but uses the wide
 // frame variants. Intro: scroll4 → scroll2 → scroll1, idles on scroll1.
 // Exit:  scroll1 → scroll3 → scroll4, ends on scroll4.
+//
+// All four frame components are mounted once and stacked absolutely; we toggle
+// which one is visible via opacity. This keeps each frame's expensive grain
+// generation memoized for the lifetime of the component instead of being
+// recomputed on every frame swap.
 
 const FRAME_TIMINGS = [75, 75, 150];
 
 type Phase = "intro" | "idle" | "exit" | "done";
 
-const INTRO_FRAMES = [ScrollWide4, ScrollWide2, ScrollWide1];
-const EXIT_FRAMES = [ScrollWide1, ScrollWide3, ScrollWide4];
+// Stable indices into the [ScrollWide1, ScrollWide2, ScrollWide3, ScrollWide4] array
+const INTRO_INDICES = [3, 1, 0]; // scroll4 → scroll2 → scroll1
+const EXIT_INDICES = [0, 2, 3]; // scroll1 → scroll3 → scroll4
+
+const FRAMES = [ScrollWide1, ScrollWide2, ScrollWide3, ScrollWide4] as const;
 
 interface ScrollWideAnimationProps {
   className?: string;
@@ -36,8 +44,8 @@ export function ScrollWideAnimation({
   delay = 0,
   preserveAspectRatio = "none",
 }: ScrollWideAnimationProps) {
-  // While waiting on the intro delay, render nothing so the closed scroll
-  // doesn't pop in before opening.
+  // While waiting on the intro delay, render frame 4 (closed) so the scroll
+  // doesn't flash open before the delay elapses.
   const [phase, setPhase] = useState<Phase>(delay > 0 ? "done" : "intro");
   const [frameIndex, setFrameIndex] = useState(0);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -97,22 +105,39 @@ export function ScrollWideAnimation({
     return () => clearTimeout(timerRef.current);
   }, [triggerExit, phase, runSequence]);
 
-  const frames = phase === "exit" ? EXIT_FRAMES : INTRO_FRAMES;
-  const Frame =
-    phase === "idle"
-      ? ScrollWide1
-      : phase === "done"
-        ? ScrollWide4
-        : frames[frameIndex];
+  // Resolve which of the 4 mounted frames should be visible right now.
+  let activeIdx: number;
+  if (phase === "idle") {
+    activeIdx = 0; // ScrollWide1
+  } else if (phase === "done") {
+    activeIdx = 3; // ScrollWide4
+  } else if (phase === "exit") {
+    activeIdx = EXIT_INDICES[frameIndex];
+  } else {
+    activeIdx = INTRO_INDICES[frameIndex];
+  }
+
+  // Internal style is merged so user-provided values win on conflict.
+  const mergedStyle: React.CSSProperties = { ...style };
 
   return (
     <div
       className={className}
-      style={style}
+      style={mergedStyle}
       role="presentation"
       aria-hidden="true"
     >
-      <Frame className="w-full h-full" preserveAspectRatio={preserveAspectRatio} />
+      <div className="relative h-full w-full">
+        {FRAMES.map((Frame, i) => (
+          <div
+            key={i}
+            className="absolute inset-0 h-full w-full"
+            style={{ opacity: i === activeIdx ? 1 : 0 }}
+          >
+            <Frame className="h-full w-full" preserveAspectRatio={preserveAspectRatio} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
