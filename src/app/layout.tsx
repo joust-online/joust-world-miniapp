@@ -7,7 +7,10 @@ import { DevInfo } from "@/components/dev-info";
 import { VerificationWall } from "@/components/verification-wall";
 import { Eruda } from "@/components/eruda";
 import SplashBackground from "@/components/splash-background";
+import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   title: "Joust",
@@ -51,7 +54,7 @@ const firaMono = Fira_Code({
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={cn("font-sans", geist.variable)}>
       <body className={cn(jacquard.variable, jeju.variable, firaMono.variable, "dark")}>
         <Eruda />
         <SplashBackground />

@@ -17,35 +17,38 @@
   --popover: hsl(0 0% 100%);
   --popover-foreground: hsl(210 10% 10%);
 
-  --primary: hsl(122 46% 31%); /* #3F7B29 → reads fine on white */
+  --primary: hsl(318 25% 23%); /* #4a2d3f – deep plum */
   --primary-foreground: hsl(0 0% 100%);
 
   --secondary: hsl(200 11% 43%); /* #64747D */
   --secondary-foreground: hsl(0 0% 100%);
 
-  --accent: hsl(138 100% 32%); /* #00A519  (unchanged)        */
-  --accent-secondary: hsl(40 69% 34%); /* #966A18 */
+  --accent: hsl(143 12% 35%); /* #4e6251 – muted sage */
+  --accent-secondary: hsl(39 57% 49%); /* #c39337 – warm gold */
   --accent-foreground: hsl(0 0% 100%);
+
+  /* gain/correct sage green */
+  --gain: hsl(124 20% 46%); /* #5e8c61 */
 
   /* subtle / disabled */
   --muted: hsl(210 16% 93%); /* #EEF0F1 */
   --muted-foreground: hsl(210 8% 46%); /* #6B6F72 */
 
   /* danger */
-  --destructive: hsl(0 100% 33%); /* #A50000 */
+  --destructive: hsl(347 52% 28%); /* #6b2233 – deep burgundy */
   --destructive-foreground: hsl(0 0% 100%);
 
   /* strokes & focus */
   --border: hsl(210 19% 90%); /* #E4E7EB */
-  --border-accent-secondary: #ffe500;
-  --border-destructive: #ee8989;
+  --border-accent-secondary: hsl(35 56% 86%); /* #f0e0c8 – warm cream */
+  --border-destructive: hsl(347 52% 28%); /* #6b2233 – burgundy */
   --input: hsl(210 17% 88%); /* #EAEAEC */
-  --ring: hsl(200 100% 45%); /* #0095FF – visible on light */
+  --ring: hsl(200 100% 45%); /* #0095FF – visible on light (unchanged) */
 
   /* charts, sidebar, radius, shadows – leave as-is or tweak later */
-  --chart-1: hsl(138 100% 32%);
-  --chart-2: hsl(46 100% 50%);
-  --chart-3: hsl(0 100% 60%);
+  --chart-1: hsl(143 12% 35%);
+  --chart-2: hsl(39 57% 49%);
+  --chart-3: hsl(347 52% 28%);
   --chart-4: hsl(276 75% 55%);
   --chart-5: hsl(191 100% 51%);
 
@@ -66,42 +69,45 @@
 }
 
 .dark {
-  --background: hsl(210 8% 8%); /* #131516 */
+  --background: hsl(226 32% 8%); /* #0f121c – navy-black */
   --foreground: hsl(0 0% 100%);
 
   /* --card: hsl(210 8% 10%); #18181A */
   --card: transparent;
   --card-foreground: hsl(0 0% 100%);
 
-  --card-filled: hsl(210 8% 10%);
+  --card-filled: hsl(226 32% 10%);
 
-  --popover: hsl(210 8% 8%); /* #131516 */
+  --popover: hsl(226 32% 8%); /* #0f121c – navy-black */
   --popover-foreground: hsl(0 0% 100%);
 
   --navigation: var(--card);
   --navigation-foreground: var(--card-foreground);
 
-  --primary: hsl(122 46% 29%); /* #3A7027 */
+  --primary: hsl(318 25% 23%); /* #4a2d3f – deep plum */
   --primary-foreground: hsl(0 0% 100%);
 
   --secondary: hsl(200 9% 44%); /* #67747C */
   --secondary-foreground: hsl(0 0% 100%);
 
-  --accent: hsl(138 100% 32%); /* #00A519 */
-  --accent-secondary: hsl(40 69% 34%); /* #966A18 */
+  --accent: hsl(143 12% 35%); /* #4e6251 – muted sage */
+  --accent-secondary: hsl(39 57% 49%); /* #c39337 – warm gold */
   --accent-foreground: hsl(0 0% 100%);
-  --border-accent-secondary: #ffe500;
+  --border-accent-secondary: hsl(35 56% 86%); /* #f0e0c8 – warm cream */
+
+  /* gain/correct sage green */
+  --gain: hsl(124 20% 46%); /* #5e8c61 */
 
   --muted: hsl(210 6% 13%); /* #212124 */
   --muted-foreground: hsl(0 0% 70%); /* #B2B2B2 */
 
-  --destructive: hsl(0 100% 33%); /* #A50000 */
+  --destructive: hsl(347 52% 28%); /* #6b2233 – deep burgundy */
   --destructive-foreground: hsl(0 0% 100%);
 
   --border: hsl(210 6% 13%); /* #212124 */
-  --border-destructive: #ee8989;
+  --border-destructive: hsl(347 52% 28%); /* #6b2233 – burgundy */
   --input: hsl(210 10% 18%); /* #293039 */
-  --ring: hsl(191 100% 51%); /* #00AFFF */
+  --ring: hsl(191 100% 51%); /* #00AFFF (unchanged) */
   /* darker shadow palette */
   --shadow-sm: 0 1px 1.5px 0 hsl(210 6% 5% / 0.4);
   --shadow-md: 0 4px 6px -2px hsl(210 6% 5% / 0.45);
@@ -135,6 +141,7 @@
   --color-border-destructive: var(--border-destructive);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-gain: var(--gain);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -191,5 +198,74 @@ body {
   }
   body {
     @apply text-foreground;
+  }
+}
+
+/* Glitch text effect */
+.glitch-text {
+  position: relative;
+}
+.glitch-text::before,
+.glitch-text::after {
+  content: attr(data-glitch);
+  position: absolute;
+  inset: 0;
+}
+.glitch-text::before {
+  color: hsl(var(--accent));
+  animation: glitch-1 0.3s infinite;
+  clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+}
+.glitch-text::after {
+  color: hsl(var(--ring));
+  animation: glitch-2 0.3s infinite;
+  clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+}
+@keyframes glitch-1 {
+  0% { transform: translate(0); }
+  20% { transform: translate(-3px, 2px); }
+  40% { transform: translate(3px, -1px); }
+  60% { transform: translate(-2px, 1px); }
+  80% { transform: translate(2px, -2px); }
+  100% { transform: translate(0); }
+}
+@keyframes glitch-2 {
+  0% { transform: translate(0); }
+  20% { transform: translate(3px, -2px); }
+  40% { transform: translate(-3px, 1px); }
+  60% { transform: translate(2px, -1px); }
+  80% { transform: translate(-2px, 2px); }
+  100% { transform: translate(0); }
+}
+
+/* Frame-by-frame animation (4-frame, 800ms cycle) */
+.frame-anim {
+  position: relative;
+}
+.frame-anim > * {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+}
+.frame-anim > :nth-child(1) { animation: show4 800ms steps(1) infinite; animation-delay: 0ms; }
+.frame-anim > :nth-child(2) { animation: show4 800ms steps(1) infinite; animation-delay: -600ms; }
+.frame-anim > :nth-child(3) { animation: show4 800ms steps(1) infinite; animation-delay: -400ms; }
+.frame-anim > :nth-child(4) { animation: show4 800ms steps(1) infinite; animation-delay: -200ms; }
+
+@keyframes show4 {
+  0%, 24.99%  { visibility: visible; }
+  25%, 100%   { visibility: hidden; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glitch-text::before,
+  .glitch-text::after {
+    animation: none !important;
+  }
+  .frame-anim > * {
+    animation: none !important;
+  }
+  .frame-anim > :first-child {
+    visibility: visible;
   }
 }
