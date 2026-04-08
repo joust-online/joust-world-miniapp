@@ -8,6 +8,7 @@ import { formatDistanceToNow } from "date-fns";
 import { PoolState } from "@/generated/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ScrollWideAnimation } from "@/components/scroll-illustration/scroll-wide-animation";
 
 
 interface PoolCardProps {
@@ -51,8 +52,16 @@ export function PoolCard({ pool }: PoolCardProps) {
 
   return (
     <Link href={`/pool/${pool.id}`} className="block">
-      <Card className="hover:border-accent/30 rounded-xl py-0 shadow-none transition-colors">
-        <CardContent className="p-4">
+      <Card className="hover:border-accent/30 relative rounded-xl border-transparent bg-transparent py-0 shadow-none transition-colors">
+        {/* Wide scroll background — 125% size, opacity-30 to match login page */}
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-visible">
+          <ScrollWideAnimation
+            className="h-[135%] w-[135%] opacity-30"
+            preserveAspectRatio="none"
+            style={{ transform: "rotate(-2.5deg)", transformOrigin: "center center" }}
+          />
+        </div>
+        <CardContent className="relative z-10 p-4">
           <div className="mb-2 flex items-start justify-between">
             <h3 className="mr-2 flex-1 text-sm leading-tight font-semibold">{pool.title}</h3>
             <span className={`text-xs font-medium ${state.color}`}>{state.text}</span>

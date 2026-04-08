@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { ScrollWideAnimation } from "@/components/scroll-illustration/scroll-wide-animation";
 
 /* ── Pool lifecycle stages ── */
 const LIFECYCLE_STAGES = [
@@ -345,9 +346,18 @@ export default function PoolDetailPage() {
         &larr; Back
       </Button>
 
-      <div className="mb-4">
-        <h1 className="mb-1 text-xl font-bold">{pool.title}</h1>
-        {pool.description && <p className="text-muted-foreground text-sm">{pool.description}</p>}
+      <div className="relative mb-4">
+        {/* Wide scroll background — wraps title + description */}
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-visible">
+          <ScrollWideAnimation
+            className="h-[165%] w-[165%] opacity-30"
+            preserveAspectRatio="none"
+          />
+        </div>
+        <div className="relative z-10">
+          <h1 className="mb-1 text-xl font-bold">{pool.title}</h1>
+          {pool.description && <p className="text-muted-foreground text-sm">{pool.description}</p>}
+        </div>
       </div>
 
       <PoolLifecycleBar state={pool.state} />
@@ -596,21 +606,31 @@ export default function PoolDetailPage() {
       )}
 
       {/* Arbiter Info */}
-      <Card className="mb-4 rounded-xl py-0 shadow-none">
-        <CardContent className="p-3">
-          <div className="text-muted-foreground mb-1 text-xs">Arbiter</div>
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-sm">
-              {pool.arbiter?.username ?? shortenAddress(pool.arbiterAddress)}
-              <VerificationBadge level={pool.arbiter?.worldIdLevel} />
-              {isArbiter && <span className="text-accent ml-0.5 text-xs">(you)</span>}
-            </span>
-            <span className="text-muted-foreground text-xs">
-              {pool.arbiterAccepted ? "Accepted" : "Pending"} &middot; {pool.arbiterFee / 100}% fee
-            </span>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="relative mb-4">
+        {/* Wide scroll background — sits behind the card */}
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-visible">
+          <ScrollWideAnimation
+            className="h-[175%] w-[175%] opacity-30"
+            preserveAspectRatio="none"
+            style={{ transform: "rotate(-0.5deg)", transformOrigin: "center center" }}
+          />
+        </div>
+        <Card className="relative z-10 rounded-xl py-0 shadow-none">
+          <CardContent className="p-3">
+            <div className="text-muted-foreground mb-1 text-xs">Arbiter</div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-sm">
+                {pool.arbiter?.username ?? shortenAddress(pool.arbiterAddress)}
+                <VerificationBadge level={pool.arbiter?.worldIdLevel} />
+                {isArbiter && <span className="text-accent ml-0.5 text-xs">(you)</span>}
+              </span>
+              <span className="text-muted-foreground text-xs">
+                {pool.arbiterAccepted ? "Accepted" : "Pending"} &middot; {pool.arbiterFee / 100}% fee
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Recent Predictions */}
       {pool.jousts?.length > 0 && (

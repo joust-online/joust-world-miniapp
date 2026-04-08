@@ -6,6 +6,7 @@ import { VerificationBadge } from "@/components/verification-badge";
 import { shortenAddress } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import { ScrollWideAnimation } from "@/components/scroll-illustration/scroll-wide-animation";
 
 export default function LeaderboardPage() {
   const { data, isLoading } = useQuery({
@@ -37,26 +38,35 @@ export default function LeaderboardPage() {
           ) : (
             <div className="space-y-2">
               {data?.topArbiters?.map((item: any, i: number) => (
-                <Card key={item.arbiterId} className="rounded-xl py-0 shadow-none">
-                  <CardContent className="flex items-center gap-3 p-3">
-                    <span className="text-muted-foreground w-6 text-center text-lg font-bold">
-                      {i + 1}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="truncate text-sm font-medium">
-                          {item.arbiter?.username ?? shortenAddress(item.arbiter?.address ?? "")}
-                        </span>
-                        <VerificationBadge level={item.arbiter?.worldIdLevel} />
+                <div key={item.arbiterId} className="relative">
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-visible">
+                    <ScrollWideAnimation
+                      className="h-[135%] w-[135%] opacity-30"
+                      preserveAspectRatio="none"
+                      style={{ transform: "rotate(-2.5deg)", transformOrigin: "center center" }}
+                    />
+                  </div>
+                  <Card className="relative z-10 rounded-xl py-0 shadow-none">
+                    <CardContent className="flex items-center gap-3 p-3">
+                      <span className="text-muted-foreground w-6 text-center text-lg font-bold">
+                        {i + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="truncate text-sm font-medium">
+                            {item.arbiter?.username ?? shortenAddress(item.arbiter?.address ?? "")}
+                          </span>
+                          <VerificationBadge level={item.arbiter?.worldIdLevel} />
+                        </div>
+                        <div className="text-muted-foreground mt-0.5 flex gap-3 text-xs">
+                          <span className="text-green-400">+{item.totalUpvotes}</span>
+                          <span className="text-red-400">-{item.totalDownvotes}</span>
+                        </div>
                       </div>
-                      <div className="text-muted-foreground mt-0.5 flex gap-3 text-xs">
-                        <span className="text-green-400">+{item.totalUpvotes}</span>
-                        <span className="text-red-400">-{item.totalDownvotes}</span>
-                      </div>
-                    </div>
-                    <span className="text-accent text-sm font-semibold">{item.score}</span>
-                  </CardContent>
-                </Card>
+                      <span className="text-accent text-sm font-semibold">{item.score}</span>
+                    </CardContent>
+                  </Card>
+                </div>
               ))}
               {(!data?.topArbiters || data.topArbiters.length === 0) && (
                 <p className="text-muted-foreground py-6 text-center text-sm">
@@ -73,25 +83,34 @@ export default function LeaderboardPage() {
           ) : (
             <div className="space-y-2">
               {data?.topJousters?.map((item: any, i: number) => (
-                <Card key={item.id} className="rounded-xl py-0 shadow-none">
-                  <CardContent className="flex items-center gap-3 p-3">
-                    <span className="text-muted-foreground w-6 text-center text-lg font-bold">
-                      {i + 1}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="truncate text-sm font-medium">
-                          {item.username ?? shortenAddress(item.address)}
-                        </span>
-                        <VerificationBadge level={item.worldIdLevel} />
-                      </div>
-                      <span className="text-muted-foreground text-xs">
-                        {item._count?.jousts ?? 0} predictions
+                <div key={item.id} className="relative">
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-visible">
+                    <ScrollWideAnimation
+                      className="h-[135%] w-[135%] opacity-30"
+                      preserveAspectRatio="none"
+                      style={{ transform: "rotate(-2.5deg)", transformOrigin: "center center" }}
+                    />
+                  </div>
+                  <Card className="relative z-10 rounded-xl py-0 shadow-none">
+                    <CardContent className="flex items-center gap-3 p-3">
+                      <span className="text-muted-foreground w-6 text-center text-lg font-bold">
+                        {i + 1}
                       </span>
-                    </div>
-                    <span className="text-sm font-semibold">{item.totalPoints} pts</span>
-                  </CardContent>
-                </Card>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="truncate text-sm font-medium">
+                            {item.username ?? shortenAddress(item.address)}
+                          </span>
+                          <VerificationBadge level={item.worldIdLevel} />
+                        </div>
+                        <span className="text-muted-foreground text-xs">
+                          {item._count?.jousts ?? 0} predictions
+                        </span>
+                      </div>
+                      <span className="text-sm font-semibold">{item.totalPoints} pts</span>
+                    </CardContent>
+                  </Card>
+                </div>
               ))}
               {(!data?.topJousters || data.topJousters.length === 0) && (
                 <p className="text-muted-foreground py-6 text-center text-sm">No predictors yet</p>
